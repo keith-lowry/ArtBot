@@ -2,6 +2,7 @@ package lolcatloyal.IntroBot;
 
 import lolcatloyal.IntroBot.listeners.BasicListener;
 import lolcatloyal.IntroBot.listeners.CopeListener;
+import lolcatloyal.IntroBot.listeners.StupidListener;
 import lolcatloyal.IntroBot.listeners.UWUListener;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -42,6 +43,7 @@ public class IntroBot {
         builder.addEventListeners(new BasicListener());
         builder.addEventListeners(new CopeListener());
         builder.addEventListeners(new UWUListener());
+        builder.addEventListeners(new StupidListener());
     }
 
 }
