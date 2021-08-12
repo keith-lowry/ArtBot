@@ -20,7 +20,7 @@ public class IntroBot {
     public static final String ANNOUNCEMENT_CHANNELID = "875148960975691826";
 
     public static void main(String[] args) throws LoginException {
-        String token = "ODc1MTAzNDc4ODc4NDY2MDk4.YRQpoA.oLVDNmnsa1-I2S9yqnAURjwfRZc";
+        String token = args[0];
 
         builder = JDABuilder.createDefault(token);
 
