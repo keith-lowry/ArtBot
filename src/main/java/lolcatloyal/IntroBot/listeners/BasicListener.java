@@ -16,7 +16,6 @@ import javax.annotation.Nonnull;
 public class BasicListener extends ListenerAdapter {
 
     //REMEMBER TO ADD .queue() at the end of commands!!!
-
     public void onGuildMessageReceived(@Nonnull GuildMessageReceivedEvent event){
         Message message = event.getMessage();
         String messageRaw = message.getContentRaw();
@@ -49,7 +48,6 @@ public class BasicListener extends ListenerAdapter {
                         channel.sendMessage("Announcements Channel not found...").queue();
                     }
                 }
-
             }
         }
     }

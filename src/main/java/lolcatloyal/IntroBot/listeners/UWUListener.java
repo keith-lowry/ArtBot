@@ -11,6 +11,7 @@ public class UWUListener extends ListenerAdapter {
 
     public void onGuildMessageReceived(@Nonnull GuildMessageReceivedEvent event){
 
+
         Message message = event.getMessage();
         String messageRaw = message.getContentRaw();
         TextChannel channel = message.getTextChannel();
