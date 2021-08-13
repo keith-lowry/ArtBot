@@ -1,9 +1,9 @@
 package lolcatloyal.IntroBot;
 
-import lolcatloyal.IntroBot.listeners.BasicListener;
+//import lolcatloyal.IntroBot.listeners.BasicListener;
 import lolcatloyal.IntroBot.listeners.CopeListener;
-import lolcatloyal.IntroBot.listeners.StupidListener;
-import lolcatloyal.IntroBot.listeners.UWUListener;
+//import lolcatloyal.IntroBot.listeners.StupidListener;
+//import lolcatloyal.IntroBot.listeners.UWUListener;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -21,9 +21,8 @@ public class IntroBot {
     public static final String ANNOUNCEMENT_CHANNELID = "875148960975691826";
 
     public static void main(String[] args) throws LoginException {
-        String token = args[0];
 
-        builder = JDABuilder.createDefault(token);
+        builder = JDABuilder.createDefault(args[0]);
 
         builder.disableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE);
 
@@ -31,7 +30,7 @@ public class IntroBot {
 
         builder.setCompression(Compression.NONE);
 
-        builder.setActivity(Activity.playing("Hello!"));
+        builder.setActivity(Activity.playing("cope"));
         builder.enableIntents(GatewayIntent.GUILD_MEMBERS);
 
         registerListeners();
@@ -40,10 +39,10 @@ public class IntroBot {
     }
 
     public static void registerListeners() {
-        builder.addEventListeners(new BasicListener());
+        //builder.addEventListeners(new BasicListener());
         builder.addEventListeners(new CopeListener());
-        builder.addEventListeners(new UWUListener());
-        builder.addEventListeners(new StupidListener());
+        //builder.addEventListeners(new UWUListener());
+        //builder.addEventListeners(new StupidListener());
     }
 
 }
