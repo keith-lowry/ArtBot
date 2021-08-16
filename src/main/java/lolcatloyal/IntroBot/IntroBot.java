@@ -18,6 +18,8 @@ public class IntroBot {
 
     public static final String PREFIX = "-";
 
+    public static final String MASTER_USER_ID = "274290974153244677";
+
     public static final String ANNOUNCEMENT_CHANNELID = "875148960975691826";
 
     public static void main(String[] args) throws LoginException {
@@ -30,7 +32,7 @@ public class IntroBot {
 
         builder.setCompression(Compression.NONE);
 
-        builder.setActivity(Activity.playing("cope"));
+        builder.setActivity(Activity.playing("cope help"));
         builder.enableIntents(GatewayIntent.GUILD_MEMBERS);
 
         registerListeners();

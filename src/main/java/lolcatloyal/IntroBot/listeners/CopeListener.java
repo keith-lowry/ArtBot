@@ -1,6 +1,6 @@
 package lolcatloyal.IntroBot.listeners;
 
-import lolcatloyal.IntroBot.utility.MessageParser;
+import lolcatloyal.IntroBot.IntroBot;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import javax.annotation.Nonnull;
+import javax.xml.soap.Text;
 import java.util.*;
 
 /**
@@ -26,11 +27,13 @@ public class CopeListener extends ListenerAdapter {
                     "https://tenor.com/view/cope-seeth-nero-dmc-devil-may-cry-gif-20738347",
                     "https://tenor.com/view/oomfie-twitter-mya-birdy-moots-gif-21657255"} ;
 
-    private static final String RESPONSE = "**COPE AND SEETHE**";
+    private static final String COPE_RESPONSE = "**COPE AND SEETHE**";
 
-    private static final String ENABLED_RESPONSE = "I'm listening! owo";
+    private static final String HELP_RESPONSE = "Commands: \ncope \ncope off \ncope on \ncope check \ncope help";
 
-    private static final String DISABLED_RESPONSE = "I'm sleeping... uwu";
+    private static final String ENABLED_RESPONSE = "Coping.";
+
+    private static final String DISABLED_RESPONSE = "Not coping.";
 
     private boolean enabled;
 
@@ -54,64 +57,86 @@ public class CopeListener extends ListenerAdapter {
     public void onGuildMessageReceived(@Nonnull GuildMessageReceivedEvent event){
         Message message = event.getMessage();
 
-        //message must not be sent by a bot
-        if (!message.getAuthor().isBot()){
-            TextChannel channel = event.getChannel();
-            String messageRaw = message.getContentRaw().toLowerCase();
-            String messageWithoutMentions = MessageParser.parseMessageWithoutMentions(message);
+        if(shouldRespond(message)){
+            String messageRaw = message.getContentRaw();
+            TextChannel channel = message.getTextChannel();
 
-            //send cope response to a message that is "cope" or
-            //"cope and seethe"
-            if (shouldCope(messageRaw)){
-                String response = RESPONSE;
-
-                List<User> mentionedUsers = message.getMentionedUsers();
-
-                if (!mentionedUsers.isEmpty()){
-                    StringBuilder s = new StringBuilder();
-
-                    boolean firstMention = true;
-
-                    for (User user:
-                            mentionedUsers) {
-
-                        if (firstMention){
-                            s.append(user.getAsMention());
-                            firstMention = false;
-                        }
-                        else {
-                            s.append(" ");
-                            s.append(user.getAsMention());
-                        }
-                    }
-
-                    s.append(" ");
-                    s.append(RESPONSE);
-                    response = s.toString();
-                }
-
-                channel.sendMessage(response).queue();
-
-                channel.sendMessage(chooseGif()).queue();
-
-            }
-            //disable cope responses
-            else if(messageRaw.equals("cope disable")){
-                enabled = false;
-                channel.sendMessage(DISABLED_RESPONSE).queue();
-            }
-            //enable cope responses
-            else if(messageRaw.equals("cope enable")){
-                enabled = true;
-                channel.sendMessage(ENABLED_RESPONSE).queue();
-            }
-            //check if cope response is disabled or enabled
-            else if(messageRaw.equals("cope check")){
-                if (enabled){
+            //check status
+            if(messageRaw.contains("cope check")){
+                if(enabled){
                     channel.sendMessage(ENABLED_RESPONSE).queue();
                 }
                 else {
                     channel.sendMessage(DISABLED_RESPONSE).queue();
+                }
+            }
+            //enable cope
+            else if(messageRaw.contains("cope on") && message.getAuthor().getId().equals(IntroBot.MASTER_USER_ID)){
+                enabled = true;
+                channel.sendMessage(ENABLED_RESPONSE).queue();
+            }
+            //disable cope
+            else if(messageRaw.contains("cope off") && message.getAuthor().getId().equals(IntroBot.MASTER_USER_ID)){
+                enabled = false;
+                channel.sendMessage(DISABLED_RESPONSE).queue();
+            }
+            else if(messageRaw.contains("cope help")){
+                channel.sendMessage(HELP_RESPONSE).queue();
+            }
+            //standard cope functions when enabled
+            else if (enabled){
+                if(messageRaw.contains("cope add")){
+                    String tenorLink = messageRaw.substring(8);
+
+                    if (addGif(tenorLink, channel)) {
+                        channel.sendMessage("Gif added!").queue();
+                    }
+                    else {
+                        channel.sendMessage("Gif not added").queue();
+                    }
+                }
+//                else if(messageRaw.contains("cope remove")){
+//                    String tenorLink = messageRaw.substring(8);
+//
+//                    if(removeGif(tenorLink)){
+//                        channel.sendMessage("Gif removed!").queue();
+//                    }
+//                    else {
+//                        channel.sendMessage("Gif to remove not valid").queue();
+//                    }
+//                }
+                //cope response
+                else {
+                    //TODO: make function for getting user mentions into a string from a message
+
+                    String response = COPE_RESPONSE;
+
+                    List<User> mentionedUsers = message.getMentionedUsers();
+
+                    if (!mentionedUsers.isEmpty()){
+                        StringBuilder s = new StringBuilder();
+
+                        boolean firstMention = true;
+
+                        for (User user: mentionedUsers){
+                            if(firstMention){
+                                s.append(user.getAsMention());
+                                firstMention = false;
+                            }
+                            else {
+                                s.append(" ");
+                                s.append(user.getAsMention());
+                            }
+                        }
+
+                        s.append(" ");
+                        s.append(COPE_RESPONSE);
+                        response = s.toString();
+                    }
+
+                    channel.sendMessage(response).queue();
+
+                    channel.sendMessage(chooseGif()).queue();
                 }
             }
         }
@@ -140,12 +165,20 @@ public class CopeListener extends ListenerAdapter {
      * @return True if the tenor link is valid and not
      *         already in the list of reaction gifs.
      */
-    private boolean addGif(String tenorLink){
-        if(tenorLinkIsValid(tenorLink)){
-            return false;
+    private boolean addGif(String tenorLink, TextChannel channel){
+        if(tenorLinkIsValid(tenorLink, channel)){
+            if (reactionGifs.add(tenorLink)){
+                channel.sendMessage("List could add the link").queue();
+                return true;
+            }
+            else {
+                channel.sendMessage("List could not add the link").queue();
+                return false;
+            }
         }
         else {
-            return reactionGifs.add(tenorLink);
+            channel.sendMessage("Gif link not valid").queue();
+            return false;
         }
     }
 
@@ -159,14 +192,14 @@ public class CopeListener extends ListenerAdapter {
      * @return True if the tenor link is valid and already
      *         in the list of reaction gifs.
      */
-    private boolean removeGif(String tenorLink){
-        if(tenorLinkIsValid(tenorLink)){
-            return false;
-        }
-        else{
-            return reactionGifs.remove(tenorLink);
-        }
-    }
+//    private boolean removeGif(String tenorLink){
+//        if(!tenorLinkIsValid(tenorLink)){
+//            return false;
+//        }
+//        else{
+//            return reactionGifs.remove(tenorLink);
+//        }
+//    }
 
     /**
      * Checks whether a given tenor link is valid.
@@ -178,25 +211,25 @@ public class CopeListener extends ListenerAdapter {
      *                  validity.
      * @return True if the tenor link is valid.
      */
-    private boolean tenorLinkIsValid(String tenorLink){
-        return (tenorLink == null || !tenorLink.contains("tenor.com/view"));
+    private boolean tenorLinkIsValid(String tenorLink, TextChannel channel){
+        String linkPrefix = tenorLink.substring(0, 22);
+
+        return linkPrefix.equals("https://tenor.com/view");
     }
 
     /**
-     * Checks whether the listener should make a
-     * "cope and seethe" response to a non-bot
-     * message.
+     * Checks whether the CopeListener should make a
+     * response to a message event.
      *
-     * The listener can make this response if
-     * it is enabled and the message sent by
-     * a non-bot user is "cope" or "cope and
-     * seethe."
+     * The listener can respond if
+     * the message is sent by
+     * a non-bot user and contains "cope."
      *
-     * @param messageRaw The non-bot message to respond to.
-     * @return True if the listener should make a "cope and seethe"
-     *         response.
+     * @param message The message event that the listener might be
+     *                able to respond to.
+     * @return True if the listener should respond to the message.
      */
-    private boolean shouldCope(String messageRaw){
-        return (enabled && (messageRaw.equals("cope") || messageRaw.equals("cope and seethe")));
+    private boolean shouldRespond(Message message){
+        return (!message.getAuthor().isBot() && message.getContentRaw().contains("cope"));
     }
 }
