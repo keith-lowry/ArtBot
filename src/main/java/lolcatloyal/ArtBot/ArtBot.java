@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import javax.security.auth.login.LoginException;
 
 /**
- * Discord bot for storing the creator's art links
+ * Discord bot for storing the creator's favorite Twitter art links
  * for easy retrieval. The user can add an art link to the
  * bot which will be stored under the artist's handle.
  *

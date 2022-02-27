@@ -11,7 +11,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Listener that stores muh art links.
+ * Listener for handling front-end capabilities of
+ * ArtBot.
+ *
+ * Responsible for sending embeds with
+ * Twitter links to the currently displayed
+ * artist or art piece.
+ *
+ * Responsible for listening and responding to
+ * user commands.
  */
 public class ArtListener extends ListenerAdapter {
     private ArtCollection collection;

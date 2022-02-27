@@ -3,17 +3,17 @@ package lolcatloyal.ArtBot;
 import java.util.*;
 
 /**
- * Class that represents a collection of art links
- * ordered by artist.
+ * Class that represents a collection of Twitter art links
+ * ordered by artist Twitter handle.
  *
  * Artists cannot be directly added to the collection. Instead,
  * they are automatically added when necessary when a new
- * art link is added.
+ * Twitter art link is added.
  *
  * An array of stored artist handles can be obtained from
  * the collection.
  *
- * An array of links to art by a certain artist can be
+ * An array of Twitter art links for a certain artist can be
  * obtained by providing the artist's online handle.
  */
 public class ArtCollection {
