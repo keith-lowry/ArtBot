@@ -1,5 +1,6 @@
 package lolcatloyal.ArtBot;
 
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
@@ -22,12 +23,12 @@ import java.util.regex.Pattern;
  * user commands.
  */
 public class ArtListener extends ListenerAdapter {
-    private ArtCollection collection;
-    private Util util;
+    private final ArtCollection collection;
+    private final EmbedBuilder eb;
 
     public ArtListener(){
         collection = new ArtCollection();
-        util = new Util();
+        eb = new EmbedBuilder();
     }
 
     public void onGuildMessageReceived(@Nonnull GuildMessageReceivedEvent event){
@@ -53,7 +54,6 @@ public class ArtListener extends ListenerAdapter {
         }
     }
 
-    //TODO: move to util
     private boolean isTwitterLink(String message){
         Pattern pattern = Pattern.compile("^https://twitter\\.com/.+/status/.+");
         Matcher matcher = pattern.matcher(message);

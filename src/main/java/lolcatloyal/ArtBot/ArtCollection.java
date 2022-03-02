@@ -3,25 +3,28 @@ package lolcatloyal.ArtBot;
 import java.util.*;
 
 /**
- * Class that represents a collection of Twitter art links
- * ordered by artist Twitter handle.
+ * A Collection of FXTwitter art links arranged by the
+ * artist Twitter handle and sorted by most recently
+ * added.
  *
- * Artists cannot be directly added to the collection. Instead,
+ * FXTwitter or standard Twitter post links may be added
+ * to the  Collection.
+ *
+ * Artist handles cannot be directly added to the collection. Instead,
  * they are automatically added when necessary when a new
- * Twitter art link is added.
+ * FXTwitter link is added.
  *
- * An array of stored artist handles can be obtained from
- * the collection.
+ * An array of sorted artist handles can be obtained from
+ * the Collection.
  *
- * An array of Twitter art links for a certain artist can be
- * obtained by providing the artist's online handle.
+ * An array of FXTwitter art links for a certain artist handle can
+ * be obtained from the Collection.
  */
 public class ArtCollection {
-    private SortedMap<String, List<String>> collection;
+    private final SortedMap<String, List<String>> collection;
 
     /**
-     * Initializes a new, empty ArtCollection that
-     * can be added to.
+     * Initializes a new, empty ArtCollection.
      */
     public ArtCollection(){
         collection = new TreeMap<String, List<String>>();
@@ -29,10 +32,10 @@ public class ArtCollection {
 
     /**
      * Initializes a new ArtCollection with the given
-     * map of Artists and Art Links.
+     * map of artist handles and  Links.
      *
-     * @param map SortedMap with Artist Handles and lists of Art
-     *            Links as Keys and Values.
+     * @param map SortedMap with artist handles and lists of FXTwitter art links
+     *            as Keys and Values.
      */
     public ArtCollection(SortedMap<String, List<String>> map){
         collection = map;
