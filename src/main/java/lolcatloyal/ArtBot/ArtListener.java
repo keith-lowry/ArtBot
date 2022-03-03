@@ -25,6 +25,9 @@ import java.util.regex.Pattern;
 public class ArtListener extends ListenerAdapter {
     private final ArtCollection collection;
     private final EmbedBuilder eb;
+    private static final Pattern twitPattern = Pattern.compile("^https://twitter\\.com/.+/status/.+");
+    private static final Pattern fxPattern = Pattern.compile("^https://fxtwitter\\.com/.+/status/.+");
+
 
     public ArtListener(){
         collection = new ArtCollection();
@@ -36,13 +39,22 @@ public class ArtListener extends ListenerAdapter {
 
         //check if non-bot message and in proper channel
         if (!event.getAuthor().isBot() && channel.getId().equals(ArtBot.CHANNEL_ID)){
-            Message message = event.getMessage();
-            String messageRaw = message.getContentRaw();
+            String messageRaw = event.getMessage().getContentRaw();
+            String prefix = messageRaw.substring(0, 1);
 
-            boolean isTwitterLink = isTwitterLink(messageRaw);
+            if (messageRaw.length() < 20 || !prefix.equals(ArtBot.PREFIX)){
+                return;
+            }
 
-            if(isTwitterLink){
+            String link = messageRaw.substring(1);
+
+            boolean isTwitterLink = isTwitterLink(link);
+
+            if (isTwitterLink){
                 channel.sendMessage("That is, indeed, a um, erm, twitter link...").queue();
+            }
+            else {
+                channel.sendMessage("Link invalid. Make sure you are using Twitter *post* links.").queue();
             }
         }
 
@@ -55,9 +67,9 @@ public class ArtListener extends ListenerAdapter {
     }
 
     private boolean isTwitterLink(String message){
-        Pattern pattern = Pattern.compile("^https://twitter\\.com/.+/status/.+");
-        Matcher matcher = pattern.matcher(message);
-        return matcher.find();
+        Matcher twitMatcher = twitPattern.matcher(message);
+        Matcher fxMatcher = fxPattern.matcher(message);
+        return twitMatcher.find() || fxMatcher.find();
     }
 
 }
