@@ -50,19 +50,24 @@ public class ArtListener extends ListenerAdapter {
         //check if non-bot message and in proper channel
         if (!event.getAuthor().isBot() && channel.getId().equals(ArtBot.CHANNEL_ID)){
             String messageRaw = event.getMessage().getContentRaw();
-
             Matcher addMatcher = ADD_COMMAND_PATTERN.matcher(messageRaw);
 
+            //-add [Twitter Link]
             if (addMatcher.find()) {
                 channel.sendMessage("I'll try to add that for you!").queue();
+
                 String link = trimLink(messageRaw.substring(5));
-                if (isTwitterLink(link)) {
-                    channel.sendMessage("Added!").queue();
-                    channel.sendMessage(link).queue();
+                int linkType = determineLinkType(link);
+
+                if (linkType == -1){ //Invalid link
+                    channel.sendMessage("Invalid Link. Are you sure you're using a Twitter *post* link?").queue();
+                    return;
                 }
-                else{
-                    channel.sendMessage("That's not a twitter link!").queue();
+                else if (linkType == 0) { //Twitter Link --> turn into FXTwitter Link
+                    link = twitToFXLink(link);
                 }
+
+                channel.sendMessage("Added! \n" + link).queue(); //Send FXTwitter Link confirmation
             }
 
         }
@@ -73,20 +78,51 @@ public class ArtListener extends ListenerAdapter {
         //TODO: check if not discord bot author
     }
 
-    //TODO: turn into "determineLinkType"
-    private boolean isTwitterLink(String message){
-        Matcher twitMatcher = TWIT_PATTERN.matcher(message);
-        Matcher fxMatcher = FX_PATTERN.matcher(message);
-        return twitMatcher.find() || fxMatcher.find();
+    /**
+     * Determines the type of a given Twitter link.
+     *
+     * A link can be:
+     * 0 - a Twitter post link,
+     * 1 - a FXTwitter post link, or
+     * -1 - Invalid.
+     *
+     * Note: Links to users' profiles are considered
+     * invalid.
+     * @param link Link to determine type of.
+     * @return 0 for Twitter link, 1 for FXTwitter link,
+     * or -1 for an Invalid link.
+     */
+    private int determineLinkType(String link){
+        Matcher twitMatcher = TWIT_PATTERN.matcher(link);
+        Matcher fxMatcher = FX_PATTERN.matcher(link);
+
+        if (twitMatcher.find()){
+            return 0;
+        }
+        else if (fxMatcher.find()){
+            return 1;
+        }
+
+        return -1;
     }
 
     /**
-     *
+     * Clears the ArtListener's collection of art links.
      */
     private void clearCollection(){
         collection = new ArtCollection();
     }
 
+    /**
+     * Trims a link of white space and any following
+     * characters.
+     *
+     * @precond There are no characters preceding the given link besides
+     * whitespace.
+     * @param link The desired link to trim.
+     * @return The given link without any whitespace or following
+     * characters.
+     */
     private String trimLink(String link){
         int i = 0;
         String result = link.trim();
@@ -100,6 +136,20 @@ public class ArtListener extends ListenerAdapter {
         }
 
         return result;
+    }
+
+    /**
+     * Returns the FXTwitter version of a given Twitter link by
+     * inserting "fx" into it.
+     *
+     * @precond twitLink is a Twitter link.
+     * @param twitLink The desired Twitter link to turn into an FXTwitter link.
+     * @return An FXTwitter version of a desired Twitter link.
+     */
+    private String twitToFXLink(String twitLink){
+        StringBuilder result = new StringBuilder(twitLink);
+        result.insert(8, "fx");
+        return result.toString();
     }
 
 }
