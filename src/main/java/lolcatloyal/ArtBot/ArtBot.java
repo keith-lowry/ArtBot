@@ -12,13 +12,6 @@ import javax.security.auth.login.LoginException;
  * Discord bot for storing the creator's favorite Twitter art links
  * for easy retrieval. The user can add an art link to the
  * bot which will be stored under the artist's handle.
- *
- * Commands:
- * -add [Twitter Link]   -- add a Twitter link to the bot's collection
- * -showArtists          -- show the bot's current collection of Artists and their handles
- * -showCollection       -- show the currently displayed Artist's collection of art (if one is displayed)
- * -help                 -- show command help
- *
  */
 public class ArtBot {
 
@@ -26,6 +19,8 @@ public class ArtBot {
 
     public static final String PREFIX = "-"; //Command Prefix
     public static final String CHANNEL_ID = "875121326921248791"; //ID for TextChannel
+    public static final String ADD_COMMAND = PREFIX + "add";
+    public static final String SHOW_ARTISTS_COMMAND = PREFIX + "showArtists";
     //TODO: add constants for navigation reaction emotes
 
 
