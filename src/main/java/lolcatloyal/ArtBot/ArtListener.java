@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  *
  */
 public class ArtListener extends ListenerAdapter {
-    private ArtCollection collection;
+    private ArtLinkCollection collection;
     private final EmbedBuilder EB;
 
     //Regex Patterns for Input Analysis -- THREAD SAFE
@@ -39,11 +39,21 @@ public class ArtListener extends ListenerAdapter {
     private static final Pattern ADD_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "add \\s*\\w++");
 
 
+    /**
+     * Creates a new ArtListener with
+     * an empty ArtLinkCollection.
+     */
     public ArtListener(){
-        collection = new ArtCollection();
+        collection = new ArtLinkCollection();
         EB = new EmbedBuilder();
     }
 
+    /**
+     * Reacts to non-bot author message events
+     * in the bot's text channel.
+     *
+     * @param event A message event.
+     */
     public void onGuildMessageReceived(@Nonnull GuildMessageReceivedEvent event){
         TextChannel channel = event.getChannel();
 
@@ -56,18 +66,21 @@ public class ArtListener extends ListenerAdapter {
             if (addMatcher.find()) {
                 channel.sendMessage("I'll try to add that for you!").queue();
 
-                String link = trimLink(messageRaw.substring(5));
-                int linkType = determineLinkType(link);
+                String artLink = trimLink(messageRaw.substring(5));
+                int linkType = determineLinkType(artLink);
 
                 if (linkType == -1){ //Invalid link
                     channel.sendMessage("Invalid Link. Are you sure you're using a Twitter *post* link?").queue();
                     return;
                 }
                 else if (linkType == 0) { //Twitter Link --> turn into FXTwitter Link
-                    link = twitToFXLink(link);
+                    artLink = twitToFXLink(artLink);
                 }
 
-                channel.sendMessage("Added! \n" + link).queue(); //Send FXTwitter Link confirmation
+                String artistLink = buildTwitProfileLink(artLink);
+
+                //TODO: delete user message
+                channel.sendMessage("Added! \n" + artLink + "\n" + artistLink).queue() ; //Send FXTwitter Link confirmation
             }
 
         }
@@ -79,15 +92,16 @@ public class ArtListener extends ListenerAdapter {
     }
 
     /**
-     * Determines the type of a given Twitter link.
+     * Determines the type of given Twitter link.
      *
      * A link can be:
-     * 0 - a Twitter post link,
-     * 1 - a FXTwitter post link, or
-     * -1 - Invalid.
+     * a Twitter post link (0),
+     * an FXTwitter post link (1),
+     * or Invalid (-1).
      *
      * Note: Links to users' profiles are considered
      * invalid.
+     *
      * @param link Link to determine type of.
      * @return 0 for Twitter link, 1 for FXTwitter link,
      * or -1 for an Invalid link.
@@ -110,7 +124,7 @@ public class ArtListener extends ListenerAdapter {
      * Clears the ArtListener's collection of art links.
      */
     private void clearCollection(){
-        collection = new ArtCollection();
+        collection = new ArtLinkCollection();
     }
 
     /**
@@ -119,23 +133,29 @@ public class ArtListener extends ListenerAdapter {
      *
      * @precond There are no characters preceding the given link besides
      * whitespace.
+     * @precond The given link String is not empty (i.e. "").
      * @param link The desired link to trim.
      * @return The given link without any whitespace or following
      * characters.
      */
     private String trimLink(String link){
         int i = 0;
-        String result = link.trim();
 
-        while (i < result.length()){
-            if (result.charAt(i) == ' '){
-                result = result.substring(0, i);
-                return result;
-            }
-            i++;
-        }
+        link = link.trim(); //trim whitespace
 
-        return result;
+        String[] linkParts = link.split(" "); //split based on whitespaces
+
+        return linkParts[0];
+
+//        while (i < result.length()){
+//            if (result.charAt(i) == ' '){
+//                result = result.substring(0, i);
+//                return result;
+//            }
+//            i++;
+//        }
+//
+//        return result;
     }
 
     /**
@@ -150,6 +170,20 @@ public class ArtListener extends ListenerAdapter {
         StringBuilder result = new StringBuilder(twitLink);
         result.insert(8, "fx");
         return result.toString();
+    }
+
+    /**
+     * Builds and returns a Twitter user profile link
+     * for the author of a given Twitter or FXTwitter
+     * post link.
+     *
+     * @param postLink A Twitter of FXTwitter post link.
+     * @return The profile link of the given post's author.
+     */
+    private String buildTwitProfileLink(String postLink){
+        String[] linkParts = postLink.split("/");
+        String twitterHandle = linkParts[3];
+        return "https://twitter.com/" + twitterHandle;
     }
 
 }
