@@ -68,22 +68,44 @@ public class ArtLinkCollection {
     }
 
     /**
-     * Attempts to add a given art link to the
+     * Attempts to add an art link associated with
+     * a specific artist link to the
      * collection. If the link is already in the
      * collection, it is not added.
+     *
+     * artLinks are added to the beginning of an
+     * artist's collection.
      *
      * Adds the given artist link as well
      * if it is not already in the collection.
      *
      * @param artistLink Link to artist's profile.
      * @param artLink Art post link to add to the Collection.
-     *
+     * @precond artistLink and artLink are valid  links to an artist's social
+     * page and one of the artist's pieces.
      * @return True if the link was added to the
      *         collection, false otherwise.
      */
     public boolean addArtLink(String artistLink, String artLink){
-        //TODO
-        return false;
+
+        //Need to add new artistLink
+        if (!collection.containsKey(artistLink)){
+            List<String> links = new ArrayList<>();
+            links.add(artLink);
+            collection.put(artistLink, links);
+            return true;
+        }
+
+        List<String> links = collection.get(artistLink);
+
+        //check for duplicates
+        if (links.contains(artLink)){
+            return false;
+        }
+
+        //add link to start
+        links.add(0, artLink);
+        return true;
     }
 
     /**
@@ -95,11 +117,25 @@ public class ArtLinkCollection {
      * as well.
      *
      * @param artLink Art link stored in the collection.
+     * @param artistLink The artistLink associated with the art link.
      * @return True if removal was successful, false
      *         otherwise.
      */
-    public boolean removeArtLink(String artLink){
-        //TODO
+    public boolean removeArtLink(String artistLink, String artLink){
+        if (!collection.containsKey(artistLink)){
+            return false;
+        }
+
+        List<String> links = collection.get(artistLink);
+
+        if(links.remove(artLink)){
+            if (links.size() == 0){
+                collection.remove(artistLink);
+            }
+            return true;
+        }
+
+        //Not in list
         return false;
     }
 
