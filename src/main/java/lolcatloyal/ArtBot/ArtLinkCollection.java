@@ -81,20 +81,15 @@ public class ArtLinkCollection {
      *
      * @param artistLink Link to artist's profile.
      * @param artLink Art post link to add to the Collection.
-     * @precond artistLink and artLink are valid  links to an artist's social
+     * @precond artistLink and artLink are nonnull links to an artist's social
      * page and one of the artist's pieces.
      * @return True if the link was added to the
      *         collection, false otherwise.
      */
     public boolean addArtLink(String artistLink, String artLink){
 
-        //Need to add new artistLink
-        if (!collection.containsKey(artistLink)){
-            List<String> links = new ArrayList<>();
-            links.add(artLink);
-            collection.put(artistLink, links);
-            return true;
-        }
+        //add artistLink to collection as key if needed
+        addArtistLink(artistLink);
 
         List<String> links = collection.get(artistLink);
 
@@ -158,22 +153,16 @@ public class ArtLinkCollection {
     }
 
     /**
-     * Attempts to add a new artist link to the
-     * collection.
-     *
-     * Fails if the artist link is already in
-     * the collection.
+     * Adds a new artistLink to the collection if the
+     * collection does not already contain it.
      *
      * @param artistLink Profile link of the artist to
      *               add to the collection.
-     * @return True if artist link was added, false
-     *         otherwise.
+     * @precond artistLink is nonnull.
      */
-    private boolean addArtist(String artistLink) {
-        if (collection.containsKey(artistLink)){
-            return false;
+    private void addArtistLink(String artistLink) {
+        if (!collection.containsKey(artistLink)){
+            collection.put(artistLink, new ArrayList<String>());
         }
-        collection.put(artistLink, new ArrayList<String>());
-        return true;
     }
 }
