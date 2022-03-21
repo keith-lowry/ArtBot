@@ -32,5 +32,12 @@
       <option name="IGNORE_POINT_TO_ITSELF" value="false" />
       <option name="myAdditionalJavadocTags" value="precon,precond" />
     </inspection_tool>
+    <inspection_tool class="MavenPackageUpdate" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="excludeList">
+        <list>
+          <option value="ch.qos.logback:logback-classic" />
+        </list>
+      </option>
+    </inspection_tool>
   </profile>
 </component>
