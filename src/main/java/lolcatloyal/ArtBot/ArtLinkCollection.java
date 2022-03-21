@@ -4,8 +4,8 @@ import java.util.*;
 
 /**
  * A Collection of art links arranged with
- * artist profile links as keys and arrays of art links
- * sorted by most recently added stored as values.
+ * artist profile links stored as keys and arrays of art links
+ * sorted by most recently added link stored as values.
  *
  * The collection does not check whether a key or value being
  * added is a link.
@@ -33,8 +33,9 @@ public class ArtLinkCollection {
      * Initializes a new ArtCollection with the given
      * map of artist handles and  Links.
      *
-     * @param map SortedMap with artist handles and lists of FXTwitter art links
+     * @param map SortedMap with artist handles and lists of art links
      *            as Keys and Values.
+     * @precon map is a SortedMap of artist links and their associated list of art links.
      */
     public ArtLinkCollection(SortedMap<String, List<String>> map){
         collection = map;
