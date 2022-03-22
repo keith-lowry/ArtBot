@@ -7,6 +7,7 @@ import java.util.*;
  * Keys are stored in sorted alphabetical order.
  * Values are stored in LIFO order.
  */
+@SuppressWarnings("unchecked, unused, Convert2Diamond")
 public class MultiValueMap<E> {
     private SortedMap<String, List<E>> map;
 
@@ -19,7 +20,9 @@ public class MultiValueMap<E> {
 
     /**
      * Creates a new MultiValueMap with the given map.
+     *
      * @param m A SortedMap of String Keys and associated E values.
+     * @precond m is nonnull
      */
     public MultiValueMap(SortedMap<String, List<E>> m){
         map = m;
@@ -40,6 +43,7 @@ public class MultiValueMap<E> {
      * in LIFO order. Returns null if the given Key is not in the map.
      *
      * @param key Key for the desired Values in the map.
+     * @precond key is nonnull
      * @return A sorted array of Values for the desired Key. Null if the
      *             given key is not in the map.
      */
@@ -60,6 +64,7 @@ public class MultiValueMap<E> {
      *
      * @param key Key for desired Value to add to the map.
      * @param value Desired Value to add to the map.
+     * @precond key, value are nonnull
      * @return True if Value was not already associated with the given
      *             Key.
      */
@@ -91,6 +96,7 @@ public class MultiValueMap<E> {
      *
      * @param key Key associated with a given Value to remove.
      * @param value Desired Value to remove.
+     * @precond key, value are nonnull
      * @return True if the Key was in the map and was mapped to the
      *              given Value.
      */
@@ -119,6 +125,7 @@ public class MultiValueMap<E> {
      * in the map.
      *
      * @param key Desired Key to remove.
+     * @precond key is nonnull
      * @return True if the Key was in the map.
      */
     public boolean removeKey(Object key){
