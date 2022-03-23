@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * -help                 -- show command help
  *
  */
-@SuppressWarnings("emptybody")
+@SuppressWarnings("StatementWithEmptyBody")
 public class ArtListener extends ListenerAdapter {
     private final MultiValueMap<String, String> m; //collection of art
     private final EmbedBuilder eb;
