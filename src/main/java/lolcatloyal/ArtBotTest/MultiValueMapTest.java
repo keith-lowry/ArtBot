@@ -6,9 +6,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import lolcatloyal.ArtBot.MultiValueMap;
 import java.util.Arrays;
+import java.util.Set;
 
 class MultiValueMapTest {
-    private MultiValueMap<String> m;
+    private MultiValueMap<String, String> m;
     private final String key1 = "Fruit";
     private final String key2 = "Stores";
     private final String[] values1 = {"Apples", "Oranges", "Bananas"};
@@ -18,16 +19,16 @@ class MultiValueMapTest {
 
     @BeforeEach
     void setUp() {
-        m = new MultiValueMap<String>();
+        m = new MultiValueMap<String, String>();
     }
 
     @Test
     void getKeys() {
         m.addValue(key1, values1[0]);
         m.addValue(key2, values2[0]);
-        String[] keysReceived = m.getKeys();
-        assertEquals(keys.length, keysReceived.length);
-        assertTrue(Arrays.equals(keys, keysReceived));
+        Set<String> keysReceived = m.getKeys();
+        assertEquals(keys.length, keysReceived.size());
+        assertTrue(Arrays.equals(keys, keysReceived.toArray(new String[0])));
     }
 
     @Test

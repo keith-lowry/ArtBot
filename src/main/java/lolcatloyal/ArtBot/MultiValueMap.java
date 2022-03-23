@@ -3,19 +3,19 @@ package lolcatloyal.ArtBot;
 import java.util.*;
 
 /**
- * Map that stores String keys with multiple E type values.
- * Keys are stored in sorted alphabetical order.
+ * Map that stores K type keys with multiple E type values.
+ * Keys are stored in sorted order according to their compareTo() implementation.
  * Values are stored in LIFO order.
  */
 @SuppressWarnings("unchecked, unused, Convert2Diamond")
-public class MultiValueMap<E> {
-    private SortedMap<String, List<E>> map;
+public class MultiValueMap<K extends Comparable<K>, V> {
+    private SortedMap<K, List<V>> map;
 
     /**
      * Creates a new empty MultiValueMap.
      */
     public MultiValueMap() {
-        map = new TreeMap<String, List<E>>();
+        map = new TreeMap<K, List<V>>();
     }
 
     /**
@@ -24,18 +24,18 @@ public class MultiValueMap<E> {
      * @param m A SortedMap of String Keys and associated E values.
      * @precond m is nonnull
      */
-    public MultiValueMap(SortedMap<String, List<E>> m){
+    public MultiValueMap(SortedMap<K, List<V>> m){
         map = m;
     }
 
     /**
-     * Gets an array of Keys stored in the map sorted
+     * Gets a Set of Keys stored in the map sorted
      * in alphabetical order.
      *
-     * @return A sorted String array containing the Keys stored in the map.
+     * @return A Set containing the map's keys in alphabetical order.
      */
-    public String[] getKeys(){
-        return map.keySet().toArray(new String[0]);
+    public Set<K> getKeys(){
+       return map.keySet();
     }
 
     /**
@@ -47,11 +47,12 @@ public class MultiValueMap<E> {
      * @return A sorted array of Values for the desired Key. Null if the
      *             given key is not in the map.
      */
-    public E[] getValuesForKey(String key){
+    public List<V> getValuesForKey(String key){
         //Case 1: key is in map
         if (map.containsKey(key)){
-            return (E[]) map.get(key).toArray(new Object[0]);
+            return map.get(key);
         }
+        //TODO: change to return List
 
         //Case 2: key not in map
         return null;
@@ -68,24 +69,22 @@ public class MultiValueMap<E> {
      * @return True if Value was not already associated with the given
      *             Key.
      */
-    public boolean addValue(String key, E value){
+    public boolean addValue(K key, V value){
         //Case 1: key not in map
         if (!map.containsKey(key)){
-            List<E> l = (List<E>) new ArrayList<Object>();
+            List<V> l = new ArrayList<V>();
             l.add(value);
             map.put(key, l); //Add key and value to map
             return true;
         }
 
         //Case 2: key in map
-        List<E> values = map.get(key);
+        List<V> values = map.get(key);
 
-        //Check for duplicates
         if (values.contains(value)){
             return false;
         }
-
-        values.add(0, value); //Add value to front of list
+        values.add(0, value);
         return true;
     }
 
@@ -94,20 +93,23 @@ public class MultiValueMap<E> {
      * the map if the Key is in the Map and the Value is associated
      * with it.
      *
+     * In addition, removes key if the value to remove was
+     * its last associated value.
+     *
      * @param key Key associated with a given Value to remove.
      * @param value Desired Value to remove.
      * @precond key, value are nonnull
      * @return True if the Key was in the map and was mapped to the
      *              given Value.
      */
-    public boolean removeValue(String key, E value){
+    public boolean removeValue(K key, V value){
         //Case 1: key not in map
         if (!map.containsKey(key)){
             return false;
         }
 
         //Case 2: key in map
-        List<E> values = map.get(key);
+        List<V> values = map.get(key);
 
         //Value is in list and has been removed
         if (values.remove(value)){
@@ -136,7 +138,7 @@ public class MultiValueMap<E> {
      * Empties the map of all Key and Value mappings.
      */
     public void clear(){
-        map = new TreeMap<String, List<E>>();
+        map = new TreeMap<K, List<V>>();
     }
 
 }
