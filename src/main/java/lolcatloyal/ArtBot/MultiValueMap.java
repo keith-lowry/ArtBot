@@ -9,6 +9,9 @@ import java.util.*;
  * their compareTo() implementation.
  *
  * Values are stored in LIFO order.
+ *
+ * @param <K> The type of Keys to be stored
+ * @param <V> The type of Values to be stored
  */
 @SuppressWarnings("unused, Convert2Diamond")
 public class MultiValueMap<K extends Comparable<K>, V> {

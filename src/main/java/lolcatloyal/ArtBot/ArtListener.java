@@ -1,12 +1,15 @@
 package lolcatloyal.ArtBot;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.requests.restaction.MessageAction;
 
 import javax.annotation.Nonnull;
+import java.awt.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,8 +34,13 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StatementWithEmptyBody")
 public class ArtListener extends ListenerAdapter {
-    private final MultiValueMap<String, String> m; //collection of art
+    private final MultiValueMap<String, String> m; //collection of art -- Artist links are keys, Art links are values
     private final EmbedBuilder eb;
+    private String displayedArtist; //String link to currently displayed Artist
+    private ArrayIterator<String> displayedLinks; //Iterator for currently displayed links
+    private int index; //index for iterating through array
+    private DisplayModeEnum displayMode;
+    private MessageAction postMessage; //our sent message displaying links
 
     //Regex Patterns for Input Analysis -- THREAD SAFE
     private static final Pattern TWIT_PATTERN = Pattern.compile("^https://twitter\\.com/.+/status/.+");
@@ -40,6 +48,18 @@ public class ArtListener extends ListenerAdapter {
     private static final Pattern ADD_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "add \\s*\\w++");
     private static final Pattern SHOW_COLL_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "showCollection$");
 
+    /**
+     * Enum determining what the Bot is currently displaying.
+     *
+     * DisplayOff: nothing is displayed
+     * DisplayArtists: Artist embeds are being displayed
+     * DisplayArt: Art embeds for a particular Artist are being displayed
+     */
+    public enum DisplayModeEnum{
+        DisplayOff,
+        DisplayArtists,
+        DisplayArt
+    }
 
     /**
      * Creates a new ArtListener with
@@ -48,6 +68,9 @@ public class ArtListener extends ListenerAdapter {
     public ArtListener(){
         m = new MultiValueMap<>();
         eb = new EmbedBuilder();
+        index = 0;
+        displayedLinks = new ArrayIterator<>(new String[0]);
+        displayMode = DisplayModeEnum.DisplayOff;
     }
 
     /**
@@ -103,7 +126,34 @@ public class ArtListener extends ListenerAdapter {
             }
             //-showCollection
             if (showMatcher.find()){
-                //TODO: show collection
+                String[] keys = m.getKeys().toArray(new String[0]);
+                if (keys.length == 0){
+                    channel.sendMessage("Not much to show right now...").queue();
+                }
+                else {
+                    channel.sendMessage(keys[0]).queue();
+                }
+
+                //TODO: check size of keys or values array
+//                switch (displayMode){
+//                    case DisplayOff: {
+//                        //TODO: handle case where collection is empty (has NO artists)
+//                        displayMode = DisplayModeEnum.DisplayArtists;
+//                        displayedLinks.setArray(m.getKeys().toArray(new String[0]));
+//                        postMessage = channel.sendMessage(displayedLinks.next());
+//                        postMessage.queue();
+//                        break;
+//                    }
+//                    case DisplayArtists: {
+//                        //TODO
+//                        return; //break method execution
+//                    }
+//                    case DisplayArt: {
+//                        //TODO
+//                        return;
+//                    }
+//
+//                }
             }
 
         }
@@ -199,5 +249,4 @@ public class ArtListener extends ListenerAdapter {
         String twitterHandle = linkParts[3];
         return "https://twitter.com/" + twitterHandle;
     }
-
 }
