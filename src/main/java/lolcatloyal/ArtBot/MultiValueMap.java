@@ -4,10 +4,13 @@ import java.util.*;
 
 /**
  * Map that stores K type keys with multiple E type values.
- * Keys are stored in sorted order according to their compareTo() implementation.
+ *
+ * Keys must extend Comparable<K>. Keys are stored in ascending order according to
+ * their compareTo() implementation.
+ *
  * Values are stored in LIFO order.
  */
-@SuppressWarnings("unchecked, unused, Convert2Diamond")
+@SuppressWarnings("unused, Convert2Diamond")
 public class MultiValueMap<K extends Comparable<K>, V> {
     private SortedMap<K, List<V>> map;
 
@@ -21,7 +24,7 @@ public class MultiValueMap<K extends Comparable<K>, V> {
     /**
      * Creates a new MultiValueMap with the given map.
      *
-     * @param m A SortedMap of String Keys and associated E values.
+     * @param m A SortedMap of K Keys and associated List<V> holding values for each key.
      * @precond m is nonnull
      */
     public MultiValueMap(SortedMap<K, List<V>> m){
@@ -39,20 +42,19 @@ public class MultiValueMap<K extends Comparable<K>, V> {
     }
 
     /**
-     * Gets an array of the Values associated with a given Key sorted
+     * Gets a List of the Values associated with a given Key sorted
      * in LIFO order. Returns null if the given Key is not in the map.
      *
      * @param key Key for the desired Values in the map.
      * @precond key is nonnull
-     * @return A sorted array of Values for the desired Key. Null if the
+     * @return A List of Values mapped from the desired Key arranged in LIFO order. Null if the
      *             given key is not in the map.
      */
-    public List<V> getValuesForKey(String key){
+    public List<V> getValuesForKey(K key){
         //Case 1: key is in map
         if (map.containsKey(key)){
             return map.get(key);
         }
-        //TODO: change to return List
 
         //Case 2: key not in map
         return null;
@@ -81,6 +83,7 @@ public class MultiValueMap<K extends Comparable<K>, V> {
         //Case 2: key in map
         List<V> values = map.get(key);
 
+        //Check for duplicates
         if (values.contains(value)){
             return false;
         }
@@ -93,8 +96,10 @@ public class MultiValueMap<K extends Comparable<K>, V> {
      * the map if the Key is in the Map and the Value is associated
      * with it.
      *
-     * In addition, removes key if the value to remove was
-     * its last associated value.
+     * In addition, removes Key if the Value to remove was
+     * its last associated Value.
+     *
+     * Fails if Key was not in the map, or was not mapped to Value.
      *
      * @param key Key associated with a given Value to remove.
      * @param value Desired Value to remove.
@@ -130,7 +135,7 @@ public class MultiValueMap<K extends Comparable<K>, V> {
      * @precond key is nonnull
      * @return True if the Key was in the map.
      */
-    public boolean removeKey(Object key){
+    public boolean removeKey(K key){
         return map.remove(key) != null;
     }
 
