@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
  * -help                 -- show command help
  *
  */
+@SuppressWarnings("emptybody")
 public class ArtListener extends ListenerAdapter {
     private final MultiValueMap<String, String> m; //collection of art
     private final EmbedBuilder eb;
@@ -37,6 +38,7 @@ public class ArtListener extends ListenerAdapter {
     private static final Pattern TWIT_PATTERN = Pattern.compile("^https://twitter\\.com/.+/status/.+");
     private static final Pattern FX_PATTERN = Pattern.compile("^https://fxtwitter\\.com/.+/status/.+");
     private static final Pattern ADD_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "add \\s*\\w++");
+    private static final Pattern SHOW_COLL_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "showCollection$");
 
 
     /**
@@ -60,7 +62,10 @@ public class ArtListener extends ListenerAdapter {
         //check if non-bot message and in proper channel
         if (!event.getAuthor().isBot() && channel.getId().equals(ArtBot.CHANNEL_ID)){
             String messageRaw = event.getMessage().getContentRaw();
+
+            //Matchers for Command Parsing
             Matcher addMatcher = ADD_COMMAND_PATTERN.matcher(messageRaw);
+            Matcher showMatcher = SHOW_COLL_COMMAND_PATTERN.matcher(messageRaw);
 
             //-add [Twitter Link]
             if (addMatcher.find()) {
@@ -95,6 +100,10 @@ public class ArtListener extends ListenerAdapter {
                     //Send Failure Message
                     channel.sendMessage("Sorry - I couldn't do that. That piece was already stored.").queue();
                 }
+            }
+            //-showCollection
+            if (showMatcher.find()){
+                //TODO: show collection
             }
 
         }
