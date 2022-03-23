@@ -1,4 +1,4 @@
-package lolcatloyal.ArtBot;
+package lolcatloyal.Deprecated;
 
 import java.util.*;
 
@@ -19,6 +19,7 @@ import java.util.*;
  * An array of art links for a certain artist profile link can
  * be obtained from the Collection.
  */
+@SuppressWarnings("Convert2Diamond")
 public class ArtLinkCollection {
     private final SortedMap<String, List<String>> collection;
 

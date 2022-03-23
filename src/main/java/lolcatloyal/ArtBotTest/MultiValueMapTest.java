@@ -9,6 +9,7 @@ import lolcatloyal.ArtBot.MultiValueMap;
 /**
  * Test class for MultiValueMap's methods.
  */
+@SuppressWarnings("Convert2Diamond")
 class MultiValueMapTest {
     private MultiValueMap<String, String> m;
     private final String key1 = "Fruit";

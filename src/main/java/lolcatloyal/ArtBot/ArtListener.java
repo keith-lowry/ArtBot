@@ -30,8 +30,8 @@ import java.util.regex.Pattern;
  *
  */
 public class ArtListener extends ListenerAdapter {
-    private ArtLinkCollection collection;
-    private final EmbedBuilder EB;
+    private final MultiValueMap<String, String> m; //collection of art
+    private final EmbedBuilder eb;
 
     //Regex Patterns for Input Analysis -- THREAD SAFE
     private static final Pattern TWIT_PATTERN = Pattern.compile("^https://twitter\\.com/.+/status/.+");
@@ -41,11 +41,11 @@ public class ArtListener extends ListenerAdapter {
 
     /**
      * Creates a new ArtListener with
-     * an empty ArtLinkCollection.
+     * an empty collection.
      */
     public ArtListener(){
-        collection = new ArtLinkCollection();
-        EB = new EmbedBuilder();
+        m = new MultiValueMap<>();
+        eb = new EmbedBuilder();
     }
 
     /**
@@ -77,10 +77,24 @@ public class ArtListener extends ListenerAdapter {
                     artLink = twitToFXLink(artLink);
                 }
 
-                String artistLink = buildTwitProfileLink(artLink);
+                String artistLink = "";
+
+                //Build Twitter Profile Link
+                if (linkType == 0 || linkType == 1){
+                    artistLink = buildTwitProfileLink(artLink);
+                }
 
                 //TODO: delete user message
-                channel.sendMessage("Added! \n" + artLink + "\n" + artistLink).queue() ; //Send FXTwitter Link confirmation
+
+                //Try to add to map
+                if (m.addValue(artistLink, artLink)) {
+                    //Send Confirmation Message
+                    channel.sendMessage("Added! \n" + artLink + "\n" + artistLink).queue() ;
+                }
+                else {
+                    //Send Failure Message
+                    channel.sendMessage("Sorry - I couldn't do that. That piece was already stored.").queue();
+                }
             }
 
         }
@@ -88,7 +102,10 @@ public class ArtListener extends ListenerAdapter {
     }
 
     public void onGuildMessageReactionAdd(@Nonnull GuildMessageReactionAddEvent event){
-        //TODO: check if not discord bot author
+        //Check if author is not Bot
+        if (!event.getUser().isBot()){
+            //TODO: do stuff
+        }
     }
 
     /**
@@ -111,20 +128,20 @@ public class ArtListener extends ListenerAdapter {
         Matcher fxMatcher = FX_PATTERN.matcher(link);
 
         if (twitMatcher.find()){
-            return 0;
+            return 0; //Twitter Link
         }
         else if (fxMatcher.find()){
-            return 1;
+            return 1; //FXTwitter Link
         }
 
         return -1;
     }
 
     /**
-     * Clears the ArtListener's collection of art links.
+     * Clears the ArtListener's collection of art.
      */
     private void clearCollection(){
-        collection = new ArtLinkCollection();
+        m.clear();
     }
 
     /**
@@ -139,23 +156,11 @@ public class ArtListener extends ListenerAdapter {
      * characters.
      */
     private String trimLink(String link){
-        int i = 0;
-
         link = link.trim(); //trim whitespace
 
         String[] linkParts = link.split(" "); //split based on whitespaces
 
         return linkParts[0];
-
-//        while (i < result.length()){
-//            if (result.charAt(i) == ' '){
-//                result = result.substring(0, i);
-//                return result;
-//            }
-//            i++;
-//        }
-//
-//        return result;
     }
 
     /**
@@ -177,7 +182,7 @@ public class ArtListener extends ListenerAdapter {
      * for the author of a given Twitter or FXTwitter
      * post link.
      *
-     * @param postLink A Twitter of FXTwitter post link.
+     * @param postLink A Twitter or FXTwitter post link.
      * @return The profile link of the given post's author.
      */
     private String buildTwitProfileLink(String postLink){
