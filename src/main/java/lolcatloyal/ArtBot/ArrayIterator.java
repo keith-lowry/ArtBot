@@ -2,6 +2,7 @@ package lolcatloyal.ArtBot;
 
 /**
  * Wrapper class to allow easy iteration over an array.
+ * Iterator starts at the last element in the array by default.
  *
  * @param <E> The type of Object stored within the array
  */
