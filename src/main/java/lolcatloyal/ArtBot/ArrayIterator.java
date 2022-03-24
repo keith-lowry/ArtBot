@@ -13,28 +13,30 @@ public class ArrayIterator<E> {
     /**
      * Creates a new ArrayIterator for the given array.
      *
-     * If the given array has size 0, initializes
-     * iterator with a size 1 array for E.
+     * If the given array is null or has size 0, initializes
+     * iterator with a size 1 empty array of E.
      *
      * @param array Array to iterate over.
      */
     public ArrayIterator(E[] array){
-        if (array.length == 0){
+        setArray(array);
+    }
+
+    /**
+     * Sets the underlying array to iterate over.
+     *
+     * If the given array is null or has size 0, sets array to
+     * a size 1 empty array of E.
+     * @param array New array to iterate over.
+     */
+    public void setArray(E[] array){
+        if (array == null || array.length == 0){
             a = (E[]) new Object[1];
         }
         else {
             a = array;
         }
         resetIndex();
-    }
-
-    /**
-     * Set the underlying array to iterate over.
-     * @param array New array to iterate over.
-     */
-    public void setArray(E[] array){
-        resetIndex();
-        a = array;
     }
 
     /**
