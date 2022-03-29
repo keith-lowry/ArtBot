@@ -1,15 +1,12 @@
 package lolcatloyal.ArtBot;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 
 import javax.annotation.Nonnull;
-import java.awt.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,8 +15,8 @@ import java.util.regex.Pattern;
  * ArtBot.
  *
  * Responsible for sending embeds with
- * Twitter links to the currently displayed
- * artist or art piece.
+ * Twitter links for the currently displayed
+ * Art piece or Artist.
  *
  * Responsible for listening and responding to
  * user commands.
@@ -29,8 +26,7 @@ import java.util.regex.Pattern;
  * -showArtists          -- show the bot's current collection of Artists and their handles
  * -showCollection       -- show the currently displayed Artist's collection of art (if one is displayed)
  * -clearCollection      -- empty the collection of all entries
- * -help                 -- show command help
- *
+ * -help                 -- show commands
  */
 @SuppressWarnings("StatementWithEmptyBody")
 public class ArtListener extends ListenerAdapter {
@@ -38,15 +34,15 @@ public class ArtListener extends ListenerAdapter {
     private final EmbedBuilder eb;
     private String displayedArtist; //String link to currently displayed Artist
     private ArrayIterator<String> displayedLinks; //Iterator for currently displayed links
-    private int index; //index for iterating through array
     private DisplayModeEnum displayMode;
-    private MessageAction postMessage; //our sent message displaying links
 
     //Regex Patterns for Input Analysis -- THREAD SAFE
     private static final Pattern TWIT_PATTERN = Pattern.compile("^https://twitter\\.com/.+/status/.+");
     private static final Pattern FX_PATTERN = Pattern.compile("^https://fxtwitter\\.com/.+/status/.+");
     private static final Pattern ADD_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "add \\s*\\w++");
     private static final Pattern SHOW_COLL_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "showCollection$");
+
+    //TODO: add methods for handling each individual command :3
 
     /**
      * Enum determining what the Bot is currently displaying.
@@ -68,19 +64,30 @@ public class ArtListener extends ListenerAdapter {
     public ArtListener(){
         m = new MultiValueMap<>();
         eb = new EmbedBuilder();
-        index = 0;
         displayedLinks = new ArrayIterator<>(new String[0]);
         displayMode = DisplayModeEnum.DisplayOff;
+    }
+
+    /**
+     * Reacts to a non-bot click on a button attached
+     * to a displayed link.
+     *
+     * @param event A buttoninteractionevent.
+     */
+    public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
+        if (event.getChannel().getId().equals(ArtBot.CHANNEL_ID)){
+            //TODO: do stuff
+        }
     }
 
     /**
      * Reacts to non-bot author message events
      * in the bot's text channel.
      *
-     * @param event A message event.
+     * @param event A messagereceivedevent.
      */
-    public void onGuildMessageReceived(@Nonnull GuildMessageReceivedEvent event){
-        TextChannel channel = event.getChannel();
+    public void onMessageReceived(@Nonnull MessageReceivedEvent event){
+        MessageChannel channel = event.getChannel();
 
         //check if non-bot message and in proper channel
         if (!event.getAuthor().isBot() && channel.getId().equals(ArtBot.CHANNEL_ID)){
@@ -92,13 +99,15 @@ public class ArtListener extends ListenerAdapter {
 
             //-add [Twitter Link]
             if (addMatcher.find()) {
+                //TODO: what if mode is displayArtists or displayArt, does that matter?
                 channel.sendMessage("I'll try to add that for you!").queue();
 
                 String artLink = trimLink(messageRaw.substring(5));
                 int linkType = determineLinkType(artLink);
 
                 if (linkType == -1){ //Invalid link
-                    channel.sendMessage("Invalid Link. Are you sure you're using a Twitter *post* link?").queue();
+                    channel.sendMessage("Invalid Link. Are you sure you're using a Twitter *post* link? " +
+                            "Profile links cannot be added directly.").queue();
                     return;
                 }
                 else if (linkType == 0) { //Twitter Link --> turn into FXTwitter Link
@@ -117,7 +126,7 @@ public class ArtListener extends ListenerAdapter {
                 //Try to add to map
                 if (m.addValue(artistLink, artLink)) {
                     //Send Confirmation Message
-                    channel.sendMessage("Added! \n" + artLink + "\n" + artistLink).queue() ;
+                    channel.sendMessage("Added! \n" + artLink + "\n" + artistLink).queue() ; //TODO remove links from confir. message
                 }
                 else {
                     //Send Failure Message
@@ -125,47 +134,40 @@ public class ArtListener extends ListenerAdapter {
                 }
             }
             //-showCollection
-            if (showMatcher.find()){
-                String[] keys = m.getKeys().toArray(new String[0]);
-                if (keys.length == 0){
-                    channel.sendMessage("Not much to show right now...").queue();
-                }
-                else {
-                    channel.sendMessage(keys[0]).queue();
-                }
+            else if (showMatcher.find()){
+                channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
+                switch (displayMode){
+                    case DisplayOff: {
+                        String[] keys = m.getKeys().toArray(new String[0]);
 
-                //TODO: check size of keys or values array
-//                switch (displayMode){
-//                    case DisplayOff: {
-//                        //TODO: handle case where collection is empty (has NO artists)
-//                        displayMode = DisplayModeEnum.DisplayArtists;
-//                        displayedLinks.setArray(m.getKeys().toArray(new String[0]));
-//                        postMessage = channel.sendMessage(displayedLinks.next());
-//                        postMessage.queue();
-//                        break;
-//                    }
-//                    case DisplayArtists: {
-//                        //TODO
-//                        return; //break method execution
-//                    }
-//                    case DisplayArt: {
-//                        //TODO
-//                        return;
-//                    }
-//
-//                }
+                        if (keys.length == 0){
+                            channel.sendMessage("Nothing to show right now...").queue();
+                        }
+                        else {
+                            displayMode = DisplayModeEnum.DisplayArtists;
+                            displayedLinks.setArray(m.getKeys().toArray(new String[0]));
+                            displayedArtist = displayedLinks.next();
+                            channel.sendMessage(displayedArtist).queue();
+                            //TODO: add action row
+                        }
+                        break;
+                    }
+                    case DisplayArtists: {
+                        displayedArtist = displayedLinks.next();
+                        channel.sendMessage(displayedArtist).queue();
+                        break;
+                    }
+                    case DisplayArt: {
+                        //TODO
+                        break;
+                    }
+                }
+                channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
             }
-
         }
 
     }
 
-    public void onGuildMessageReactionAdd(@Nonnull GuildMessageReactionAddEvent event){
-        //Check if author is not Bot
-        if (!event.getUser().isBot()){
-            //TODO: do stuff
-        }
-    }
 
     /**
      * Determines the type of given Twitter link.
