@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.regex.Matcher;
@@ -142,8 +143,9 @@ public class ArtListener extends ListenerAdapter {
      * @param channel The MessageChannel to send a response in.
      * @param messageRaw The raw String content of the MessageReceivedEvent that called this command.
      */
-    private void addToCollection(MessageChannel channel, String messageRaw){
+    private void addToCollection(@NotNull MessageChannel channel, @NotNull String messageRaw){
         //TODO: what if mode is displayArtists or displayArt, does that matter?
+        //option: can't add if not displayOff -- takes up too much space
         channel.sendMessage("I'll try to add that for you!").queue();
 
         String artLink = LinkUtil.trimLink(messageRaw.substring(5)); //remove command portion of command and trim to link
@@ -176,40 +178,34 @@ public class ArtListener extends ListenerAdapter {
     }
 
     /**
-     * Attempts to show the collection of artist profile links, which can then be
+     * Attempts to show the collection of Artists, which can then be
      * interacted with to explore their respective art link collections.
+     *
+     * Does nothing if the collection is already being shown (Artists or Art).
      *
      * @param channel The MessageChannel to display the collection of artists in.
      */
-    private void showCollection(MessageReceivedEvent event, MessageChannel channel){
+    private void showCollection(MessageReceivedEvent event, @NotNull MessageChannel channel){
         channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
 
-        switch (displayMode){
-            case DisplayOff: {
-                String[] keys = m.getKeys().toArray(new String[0]);
+        if (displayMode.equals(DisplayModeEnum.DisplayOff)) { //Display Off
+            String[] keys = m.getKeys().toArray(new String[0]);
 
-                if (keys.length == 0){
-                    channel.sendMessage("Nothing to show right now...").queue();
-                }
-                else {
-                    displayMode = DisplayModeEnum.DisplayArtists;
-                    displayedLinks.setArray(m.getKeys().toArray(new String[0]));
-                    displayedArtist = displayedLinks.next();
-                    channel.sendMessage(displayedArtist).queue();
-                    //TODO: add action row
-                }
-                break;
+            if (keys.length == 0) { //No Artists to show :(
+                channel.sendMessage("Nothing to show right now...").queue();
             }
-            case DisplayArtists: {
+            else { //Show artists!
+                displayMode = DisplayModeEnum.DisplayArtists;
+                displayedLinks.setArray(m.getKeys().toArray(new String[0]));
                 displayedArtist = displayedLinks.next();
                 channel.sendMessage(displayedArtist).queue();
-                break;
-            }
-            case DisplayArt: {
-                //TODO
-                break;
+                //TODO: add action row
             }
         }
+        else { //Collection Already Being Displayed
+            event.getMessage().delete(); //delete command message
+        }
+
         channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
     }
 
@@ -232,34 +228,80 @@ public class ArtListener extends ListenerAdapter {
     private void onClickNext(ButtonInteractionEvent event){
         //TODO: implement
 
-        //show next link in iterator, add to currently displayed artist if needed
+        //Get next link in iterator
+            //If DisplayArtists, set displayedArtist equal to it
+        //Edit original message to use this link
+            //Ensures nav buttons remain?
     }
 
     private void onClickPrev(ButtonInteractionEvent event){
         //TODO: implement
 
-        //show prev link in iterator, add to currently displayed artist if needed
+        //Get prev link in iterator
+            //If DisplayArtists, set displayedArtist equal to it
+        //Edit original message to use this link
+            //Ensures nav buttons remain?
     }
 
     private void onClickEnter(ButtonInteractionEvent event){
         //TODO: implement
 
-        //show the currently displayed artist's collection
+        //Precond: assume we are in DisplayArtists mode, currently displayed artist link is stored in field
+        //Grab array of values from map for artist
+        //set array in iterator to this array
+        //call next with the same event param
+        //set mode to displayArt
     }
 
     private void onClickExit(ButtonInteractionEvent event){
         //TODO: implement
 
         //Display Art: return to view of artists in collection
-        //Display Artists: delete embed
+            //get array of keys from map
+            //set array in iterator to this array
+            //call next with same event param
+            //set mode to displayArtists
+        //Display Artists: exit display
+            //delete embed message
+            //set mode to displayOff
     }
 
     private void onClickRemove(ButtonInteractionEvent event){
         //TODO: implement
+        //grab link, and mode from original message
+        //delete original message
 
         //Ask for confirmation
+            //Display Artists
+                //Send message asking for confirmation: "Delete Artist " + link + "?"
+            //Display Art
+                //Send message asking for confirmation: "Delete Art " + link + " by " + displayedArtist + "?"
+            //add checkmark and x emoji buttons to accept response
 
-        //DisplayArtists: remove artist, show next artist if there is one; else exit entirely
-        //DisplayArt: remove art, show next art if there is one; else return to artist view if possible; else exit entirely
+        //set mode to displayOff null out displayedArtist
+    }
+
+    private void onClickCancelRemove(ButtonInteractionEvent event){
+        //TODO: implement
+        //delete original message
+        //send confirmation message: "Remove canceled!" + \n + link
+    }
+
+    private void onClickConfirmRemove(ButtonInteractionEvent event){
+        //TODO: implement
+        //grab original message string, delete original message
+            //split string about " "
+            //check length of split
+                //length == 5
+                    //grab artist link
+                    //grab art link
+                    //attempt remove
+                        //success: "Removed! \n" + artlink
+                        //failure: "Sorry, I couldn't remove that. \n" + artLink
+                //else
+                    //grab artist link
+                    //attempt remove
+                        //success: "Removed! \n" + link
+                        //failure: "Sorry, I couldn't remove that. \n" + artistlink
     }
 }
