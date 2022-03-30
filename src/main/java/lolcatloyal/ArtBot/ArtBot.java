@@ -14,7 +14,6 @@ import javax.security.auth.login.LoginException;
  * bot which will be stored under the artist's handle.
  */
 public class ArtBot {
-
     public static JDABuilder builder;
 
     public static final String PREFIX = "-"; //Command Prefix
