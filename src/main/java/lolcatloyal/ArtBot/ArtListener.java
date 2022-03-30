@@ -41,6 +41,8 @@ public class ArtListener extends ListenerAdapter {
     private static final Pattern FX_PATTERN = Pattern.compile("^https://fxtwitter\\.com/.+/status/.+");
     private static final Pattern ADD_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "add \\s*\\w++");
     private static final Pattern SHOW_COLL_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "showCollection$");
+    private static final Pattern CLEAR_COLL_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "clearCollection$");
+    private static final Pattern HELP_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "help$");
 
     //TODO: add methods for handling each individual command :3
 
@@ -72,19 +74,23 @@ public class ArtListener extends ListenerAdapter {
      * Reacts to a non-bot click on a button attached
      * to a displayed link.
      *
+     * Commands:
+     * -add [Twitter Link]   -- add a Twitter link to the bot's collection
+     * -showCollection       -- show the bot's current collection of Artists and their handles with nav buttons
+     * -clearCollection      -- empty the collection of all entries
+     * -help                 -- show commands
+     *
      * @param event A buttoninteractionevent.
      */
     public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
-        if (event.getChannel().getId().equals(ArtBot.CHANNEL_ID)){
-            //TODO: do stuff
-        }
+        //TODO: check if button id matches
     }
 
     /**
-     * Reacts to non-bot author message events
-     * in the bot's text channel.
+     * Reacts to user messages in the bot's message channel according
+     * to the Bot commands specified at the top of this class:
      *
-     * @param event A messagereceivedevent.
+     * @param event A MessageReceivedEvent.
      */
     public void onMessageReceived(@Nonnull MessageReceivedEvent event){
         MessageChannel channel = event.getChannel();
@@ -95,82 +101,163 @@ public class ArtListener extends ListenerAdapter {
 
             //Matchers for Command Parsing
             Matcher addMatcher = ADD_COMMAND_PATTERN.matcher(messageRaw);
-            Matcher showMatcher = SHOW_COLL_COMMAND_PATTERN.matcher(messageRaw);
+            Matcher showCollMatcher = SHOW_COLL_COMMAND_PATTERN.matcher(messageRaw);
+            Matcher clearCollMatcher = CLEAR_COLL_COMMAND_PATTERN.matcher(messageRaw);
+            Matcher helpMatcher = HELP_COMMAND_PATTERN.matcher(messageRaw);
 
             //-add [Twitter Link]
             if (addMatcher.find()) {
-                //TODO: what if mode is displayArtists or displayArt, does that matter?
-                channel.sendMessage("I'll try to add that for you!").queue();
-
-                String artLink = trimLink(messageRaw.substring(5));
-                int linkType = determineLinkType(artLink);
-
-                if (linkType == -1){ //Invalid link
-                    channel.sendMessage("Invalid Link. Are you sure you're using a Twitter *post* link? " +
-                            "Profile links cannot be added directly.").queue();
-                    return;
-                }
-                else if (linkType == 0) { //Twitter Link --> turn into FXTwitter Link
-                    artLink = twitToFXLink(artLink);
-                }
-
-                String artistLink = "";
-
-                //Build Twitter Profile Link
-                if (linkType == 0 || linkType == 1){
-                    artistLink = buildTwitProfileLink(artLink);
-                }
-
-                //TODO: delete user message
-
-                //Try to add to map
-                if (m.addValue(artistLink, artLink)) {
-                    //Send Confirmation Message
-                    channel.sendMessage("Added! \n" + artLink + "\n" + artistLink).queue() ; //TODO remove links from confir. message
-                }
-                else {
-                    //Send Failure Message
-                    channel.sendMessage("Sorry - I couldn't do that. That piece was already stored.").queue();
-                }
+                addToCollection(channel, messageRaw);
             }
             //-showCollection
-            else if (showMatcher.find()){
-                channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
-                switch (displayMode){
-                    case DisplayOff: {
-                        String[] keys = m.getKeys().toArray(new String[0]);
-
-                        if (keys.length == 0){
-                            channel.sendMessage("Nothing to show right now...").queue();
-                        }
-                        else {
-                            displayMode = DisplayModeEnum.DisplayArtists;
-                            displayedLinks.setArray(m.getKeys().toArray(new String[0]));
-                            displayedArtist = displayedLinks.next();
-                            channel.sendMessage(displayedArtist).queue();
-                            //TODO: add action row
-                        }
-                        break;
-                    }
-                    case DisplayArtists: {
-                        displayedArtist = displayedLinks.next();
-                        channel.sendMessage(displayedArtist).queue();
-                        break;
-                    }
-                    case DisplayArt: {
-                        //TODO
-                        break;
-                    }
-                }
-                channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
+            else if (showCollMatcher.find()){
+                showCollection(event, channel);
             }
+            //-clearCollection
+            else if (clearCollMatcher.find()){
+                clearCollection(event, channel);
+            }
+            //-help
+            else if (helpMatcher.find()){
+                help(event, channel);
+            }
+        }
+    }
+
+    //--- Text Commands --------------------------------------------------------------
+
+    /**
+     * Attempts to add an art link given by a user's command and a matching artist link to the collection.
+     * Sends an appropriate response to the user detailing whether the attempt was successful or not.
+     *
+     * @param channel The MessageChannel to send a response in.
+     * @param messageRaw The raw String content of the MessageReceivedEvent that called this command.
+     */
+    private void addToCollection(MessageChannel channel, String messageRaw){
+        //TODO: what if mode is displayArtists or displayArt, does that matter?
+        channel.sendMessage("I'll try to add that for you!").queue();
+
+        String artLink = trimLink(messageRaw.substring(5)); //remove command portion of command and trim to link
+        int linkType = determineLinkType(artLink);
+
+        if (linkType == -1){ //Invalid link
+            channel.sendMessage("Invalid Link. Are you sure you're using a Twitter *post* link? " +
+                    "Profile links cannot be added directly.").queue();
+            return;
+        }
+        else if (linkType == 0) { //Twitter Link --> turn into FXTwitter Link
+            artLink = twitToFXLink(artLink);
+        }
+
+        String artistLink = "";
+
+        //Build Twitter Profile Link
+        artistLink = buildTwitProfileLink(artLink);
+
+        //Try to add to map
+        if (m.addValue(artistLink, artLink)) {
+            //Send Confirmation Message
+            channel.sendMessage("Added! \n" + artistLink + "\n" + artLink).queue();
+        }
+        else {
+            //Send Failure Message
+            channel.sendMessage("Sorry - I couldn't do that. That piece was already stored.").queue();
         }
 
     }
 
+    /**
+     * Attempts to show the collection of artist profile links, which can then be
+     * interacted with to explore their respective art link collections.
+     *
+     * @param channel The MessageChannel to display the collection of artists in.
+     */
+    private void showCollection(MessageReceivedEvent event, MessageChannel channel){
+        channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
+
+        switch (displayMode){
+            case DisplayOff: {
+                String[] keys = m.getKeys().toArray(new String[0]);
+
+                if (keys.length == 0){
+                    channel.sendMessage("Nothing to show right now...").queue();
+                }
+                else {
+                    displayMode = DisplayModeEnum.DisplayArtists;
+                    displayedLinks.setArray(m.getKeys().toArray(new String[0]));
+                    displayedArtist = displayedLinks.next();
+                    channel.sendMessage(displayedArtist).queue();
+                    //TODO: add action row
+                }
+                break;
+            }
+            case DisplayArtists: {
+                displayedArtist = displayedLinks.next();
+                channel.sendMessage(displayedArtist).queue();
+                break;
+            }
+            case DisplayArt: {
+                //TODO
+                break;
+            }
+        }
+        channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
+    }
 
     /**
-     * Determines the type of given Twitter link.
+     * Clears the ArtListener's collection of art and artists.
+     *
+     * @param event MessageReceivedEvent that called this command.
+     * @param channel MessageChannel to send response in.
+     */
+    private void clearCollection(MessageReceivedEvent event, MessageChannel channel){
+        //TODO: implement
+        //m.clear();
+    }
+
+    private void help(MessageReceivedEvent event, MessageChannel channel){
+        //TODO: implement
+    }
+
+    //--- Nav Button Commands --------------------------------------------------------------
+    private void next(ButtonInteractionEvent event){
+        //TODO: implement
+
+        //show next link in iterator, add to currently displayed artist if needed
+    }
+
+    private void prev(ButtonInteractionEvent event){
+        //TODO: implement
+
+        //show prev link in iterator, add to currently displayed artist if needed
+    }
+
+    private void remove(ButtonInteractionEvent event){
+        //TODO: implement
+
+        //Ask for confirmation
+
+        //DisplayArtists: remove artist, show next artist if there is one; else exit entirely
+        //DisplayArt: remove art, show next art if there is one; else return to artist view if possible; else exit entirely
+    }
+
+    private void showArt(ButtonInteractionEvent event){
+        //TODO: implement
+
+        //show the currently displayed artist's collection
+    }
+
+    private void exit(ButtonInteractionEvent event){
+        //TODO: implement
+
+        //Display Art: return to view of artists in collection
+        //Display Artists: delete embed
+    }
+
+
+    //TODO: add below methods to util static class ----------------------------------------------------------------
+    /**
+     * Determines the type of a given Twitter link.
      *
      * A link can be:
      * a Twitter post link (0),
@@ -196,13 +283,6 @@ public class ArtListener extends ListenerAdapter {
         }
 
         return -1;
-    }
-
-    /**
-     * Clears the ArtListener's collection of art.
-     */
-    private void clearCollection(){
-        m.clear();
     }
 
     /**
