@@ -187,13 +187,11 @@ public class ArtListener extends ListenerAdapter {
      * @param channel The MessageChannel to display the collection of artists in.
      */
     private void onReceiveShowCommand(MessageReceivedEvent event, @NotNull MessageChannel channel){
-        if (displayMode.equals(DisplayModeEnum.DisplayOff)) { //Display Off
-            displayCollection(channel);
+        if (!displayMode.equals(DisplayModeEnum.DisplayOff)){ //Collection Already Displayed
+            exitDisplay();
         }
-        else { //Collection Already Being Displayed
-            event.getMessage().delete(); //delete command message
-            channel.sendMessage("Collection is already displayed.").queue();
-        }
+
+        displayCollection(channel);
     }
 
     /**
