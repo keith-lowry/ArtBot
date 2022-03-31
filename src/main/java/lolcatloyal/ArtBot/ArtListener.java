@@ -1,6 +1,8 @@
 package lolcatloyal.ArtBot;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -42,6 +44,7 @@ public class ArtListener extends ListenerAdapter {
     private String displayedArtist; //String link to currently displayed Artist
     private ArrayIterator<String> displayedLinks; //Iterator for currently displayed links
     private DisplayModeEnum displayMode;
+    private Message displayMessage; //message displaying collection
 
     //Regex Patterns for Input Analysis -- THREAD SAFE
     private static final Pattern ADD_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "add \\s*\\w++");
@@ -71,6 +74,7 @@ public class ArtListener extends ListenerAdapter {
         eb = new EmbedBuilder();
         displayedLinks = new ArrayIterator<>(new String[0]);
         displayMode = DisplayModeEnum.DisplayOff;
+        displayMessage = null;
     }
 
     //--- Event Listeners --------------------------------------------------------------
@@ -118,19 +122,19 @@ public class ArtListener extends ListenerAdapter {
 
             //-add [Twitter Link]
             if (addMatcher.find()) {
-                addToCollection(channel, messageRaw);
+                onReceiveAddCommand(channel, messageRaw);
             }
             //-showCollection
             else if (showCollMatcher.find()){
-                showCollection(event, channel);
+                onReceiveShowCommand(event, channel);
             }
             //-clearCollection
             else if (clearCollMatcher.find()){
-                clearCollection(channel);
+                onReceiveClearCommand(channel);
             }
             //-help
             else if (helpMatcher.find()){
-                help(event, channel);
+                onReceiveHelpCommand(event, channel);
             }
         }
     }
@@ -143,7 +147,7 @@ public class ArtListener extends ListenerAdapter {
      * @param channel The MessageChannel to send a response in.
      * @param messageRaw The raw String content of the MessageReceivedEvent that called this command.
      */
-    private void addToCollection(@NotNull MessageChannel channel, @NotNull String messageRaw){
+    private void onReceiveAddCommand(@NotNull MessageChannel channel, @NotNull String messageRaw){
         channel.sendMessage("I'll try to add that for you!").queue();
 
         String artLink = LinkUtil.trimLink(messageRaw.substring(5)); //remove command portion of command and trim to link
@@ -182,23 +186,13 @@ public class ArtListener extends ListenerAdapter {
      *
      * @param channel The MessageChannel to display the collection of artists in.
      */
-    private void showCollection(MessageReceivedEvent event, @NotNull MessageChannel channel){
+    private void onReceiveShowCommand(MessageReceivedEvent event, @NotNull MessageChannel channel){
         if (displayMode.equals(DisplayModeEnum.DisplayOff)) { //Display Off
-            String[] keys = m.getKeys().toArray(new String[0]);
-
-            if (keys.length == 0) { //No Artists to show :(
-                channel.sendMessage("Nothing to show right now...").queue();
-            }
-            else { //Show artists!
-                displayMode = DisplayModeEnum.DisplayArtists;
-                displayedLinks.setArray(m.getKeys().toArray(new String[0]));
-                displayedArtist = displayedLinks.next();
-                channel.sendMessage(displayedArtist).queue();
-                //TODO: add action row
-            }
+            displayCollection(channel);
         }
         else { //Collection Already Being Displayed
             event.getMessage().delete(); //delete command message
+            channel.sendMessage("Collection is already displayed.").queue();
         }
     }
 
@@ -207,13 +201,13 @@ public class ArtListener extends ListenerAdapter {
      *
      * @param channel MessageChannel to send response in.
      */
-    private void clearCollection(MessageChannel channel){
+    private void onReceiveClearCommand(MessageChannel channel){
         //TODO: implement
-        channel.sendMessage("Are you sure you'd like to clear the collection?");
+        channel.sendMessage("Are you sure you'd like to clear the collection?").queue();
         //add checkmark and x buttons for confirmation
     }
 
-    private void help(MessageReceivedEvent event, MessageChannel channel){
+    private void onReceiveHelpCommand(MessageReceivedEvent event, MessageChannel channel){
         //TODO: implement
 
         //show all commands and their descriptions
@@ -253,19 +247,14 @@ public class ArtListener extends ListenerAdapter {
         //TODO: implement
 
         //Display Art: return to view of artists in collection
-            //get array of keys from map
-            //set array in iterator to this array
-            //call next with same event param
-            //set mode to displayArtists
+            //displayArtistCollection()
         //Display Artists: exit display
-            //delete embed message
-            //set mode to displayOff
+            //exitDisplay()
     }
 
     private void onClickRemove(ButtonInteractionEvent event){
         //TODO: implement
         //grab link, and mode from original message
-        //delete original message
 
         //Ask for confirmation
             //Display Artists
@@ -305,5 +294,45 @@ public class ArtListener extends ListenerAdapter {
                             //attempt remove
                                 //success: "Removed! \n" + link
                                 //failure: "Sorry, I couldn't remove that. \n" + artistlink
+    }
+
+    /**
+     * Displays the current collection of Artists, if there are any.
+     *
+     * @param channel MessageChannel to display Artists in.
+     */
+    private void displayCollection(MessageChannel channel){
+        String[] keys = m.getKeys().toArray(new String[0]);
+
+        if (keys.length == 0) { //No Artists to show :(
+            channel.sendMessage("Nothing to show right now...").queue();
+        }
+        else { //Show artists!
+            displayMode = DisplayModeEnum.DisplayArtists;
+            displayedLinks.setArray(m.getKeys().toArray(new String[0]));
+            displayedArtist = displayedLinks.next();
+
+            MessageBuilder m = new MessageBuilder();
+            m.append(displayedArtist);
+            //TODO: add action row
+            displayMessage = m.build();
+            channel.sendMessage(displayMessage).queue();
+        }
+    }
+
+    /**
+     * Closes the collection display.
+     */
+    private void exitDisplay(){
+        //Delete Embed
+        displayMessage.delete().queue();
+        displayMessage = null;
+
+        //Set Display Mode to DisplayOff
+        displayMode = DisplayModeEnum.DisplayOff;
+
+        //Null Out Displayed Artist and Displayed Links Array
+        displayedArtist = null;
+        displayedLinks.setArray(null);
     }
 }
