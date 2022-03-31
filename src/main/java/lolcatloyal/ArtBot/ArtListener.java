@@ -126,7 +126,7 @@ public class ArtListener extends ListenerAdapter {
             }
             //-clearCollection
             else if (clearCollMatcher.find()){
-                clearCollection(event, channel);
+                clearCollection(channel);
             }
             //-help
             else if (helpMatcher.find()){
@@ -144,8 +144,6 @@ public class ArtListener extends ListenerAdapter {
      * @param messageRaw The raw String content of the MessageReceivedEvent that called this command.
      */
     private void addToCollection(@NotNull MessageChannel channel, @NotNull String messageRaw){
-        //TODO: what if mode is displayArtists or displayArt, does that matter?
-        //option: can't add if not displayOff -- takes up too much space
         channel.sendMessage("I'll try to add that for you!").queue();
 
         String artLink = LinkUtil.trimLink(messageRaw.substring(5)); //remove command portion of command and trim to link
@@ -174,7 +172,6 @@ public class ArtListener extends ListenerAdapter {
             //Send Failure Message
             channel.sendMessage("Sorry - I couldn't do that. That piece was already stored.").queue();
         }
-
     }
 
     /**
@@ -186,8 +183,6 @@ public class ArtListener extends ListenerAdapter {
      * @param channel The MessageChannel to display the collection of artists in.
      */
     private void showCollection(MessageReceivedEvent event, @NotNull MessageChannel channel){
-        channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
-
         if (displayMode.equals(DisplayModeEnum.DisplayOff)) { //Display Off
             String[] keys = m.getKeys().toArray(new String[0]);
 
@@ -205,23 +200,24 @@ public class ArtListener extends ListenerAdapter {
         else { //Collection Already Being Displayed
             event.getMessage().delete(); //delete command message
         }
-
-        channel.sendMessage(displayMode.toString()).queue(); //TODO: remove debug print
     }
 
     /**
-     * Clears the ArtListener's collection of art and artists.
+     * Asks for confirmation to clear the ArtListener's collection of art and artists.
      *
-     * @param event MessageReceivedEvent that called this command.
      * @param channel MessageChannel to send response in.
      */
-    private void clearCollection(MessageReceivedEvent event, MessageChannel channel){
+    private void clearCollection(MessageChannel channel){
         //TODO: implement
-        //m.clear();
+        channel.sendMessage("Are you sure you'd like to clear the collection?");
+        //add checkmark and x buttons for confirmation
     }
 
     private void help(MessageReceivedEvent event, MessageChannel channel){
         //TODO: implement
+
+        //show all commands and their descriptions
+        //show all nav buttons and their descriptions
     }
 
     //--- Nav Button Commands --------------------------------------------------------------
@@ -281,27 +277,33 @@ public class ArtListener extends ListenerAdapter {
         //set mode to displayOff null out displayedArtist
     }
 
-    private void onClickCancelRemove(ButtonInteractionEvent event){
+    private void onClickCancel(ButtonInteractionEvent event){
         //TODO: implement
         //delete original message
-        //send confirmation message: "Remove canceled!" + \n + link
+        //send confirmation message: "Action canceled!"
     }
 
-    private void onClickConfirmRemove(ButtonInteractionEvent event){
+    private void onClickConfirm(ButtonInteractionEvent event){
         //TODO: implement
-        //grab original message string, delete original message
-            //split string about " "
-            //check length of split
-                //length == 5
-                    //grab artist link
-                    //grab art link
-                    //attempt remove
-                        //success: "Removed! \n" + artlink
-                        //failure: "Sorry, I couldn't remove that. \n" + artLink
-                //else
-                    //grab artist link
-                    //attempt remove
-                        //success: "Removed! \n" + link
-                        //failure: "Sorry, I couldn't remove that. \n" + artistlink
+        //parse original message (if string.contains("delete"), else)
+            //trying to clear collection
+                //delete original message
+                //m.clear();
+                //send confirmation message: "Collection cleared!"
+            //trying to delete an entry
+                //grab original message string, delete original message
+                    //split string about " "
+                    //check length of split
+                        //length == 5
+                            //grab artist link
+                            //grab art link
+                            //attempt remove
+                                //success: "Removed! \n" + artlink
+                                //failure: "Sorry, I couldn't remove that. \n" + artLink
+                        //else
+                            //grab artist link
+                            //attempt remove
+                                //success: "Removed! \n" + link
+                                //failure: "Sorry, I couldn't remove that. \n" + artistlink
     }
 }
