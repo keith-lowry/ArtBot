@@ -47,15 +47,16 @@ public class ArtListener extends ListenerAdapter {
 
     //Regex Patterns for Input Analysis -- THREAD SAFE
     private static final Pattern ADD_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "add \\s*\\w++");
-    private static final Pattern SHOW_COLL_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "showCollection$");
-    private static final Pattern CLEAR_COLL_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "clearCollection$");
+    private static final Pattern SHOW_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "show$");
+    private static final Pattern CLEAR_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "clear$");
     private static final Pattern HELP_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "help$");
 
     //Nav Buttons
     private static final String NEXT_BUTTON_ID = "Next";
     private static final String PREV_BUTTON_ID = "Previous";
     private static final String EXIT_BUTTON_ID = "Exit";
-    //TODO: add more button
+    private static final String ENTER_BUTTON_ID = "Enter";
+    //TODO: add more buttons
 
 
     /**
@@ -111,6 +112,8 @@ public class ArtListener extends ListenerAdapter {
                     case EXIT_BUTTON_ID:
                         onClickExit(event);
                         break;
+                    case ENTER_BUTTON_ID:
+                        onClickEnter(event);
                     default:
                         break;
                 }
@@ -139,8 +142,8 @@ public class ArtListener extends ListenerAdapter {
 
             //Matchers for Command Parsing
             Matcher addMatcher = ADD_COMMAND_PATTERN.matcher(messageRaw);
-            Matcher showCollMatcher = SHOW_COLL_COMMAND_PATTERN.matcher(messageRaw);
-            Matcher clearCollMatcher = CLEAR_COLL_COMMAND_PATTERN.matcher(messageRaw);
+            Matcher showMatcher = SHOW_COMMAND_PATTERN.matcher(messageRaw);
+            Matcher clearMatcher = CLEAR_COMMAND_PATTERN.matcher(messageRaw);
             Matcher helpMatcher = HELP_COMMAND_PATTERN.matcher(messageRaw);
 
             //-add [Twitter Link]
@@ -148,11 +151,11 @@ public class ArtListener extends ListenerAdapter {
                 onReceiveAddCommand(channel, messageRaw);
             }
             //-showCollection
-            else if (showCollMatcher.find()){
+            else if (showMatcher.find()){
                 onReceiveShowCommand(channel);
             }
             //-clearCollection
-            else if (clearCollMatcher.find()){
+            else if (clearMatcher.find()){
                 onReceiveClearCommand(channel);
             }
             //-help
@@ -218,18 +221,23 @@ public class ArtListener extends ListenerAdapter {
     }
 
     /**
-     * Asks for confirmation to clear the ArtListener's collection of art and artists.
+     * Asks for confirmation to clear the ArtListener's collection of art and artists
+     * if the collection is not already empty.
      *
      * @param channel MessageChannel to send response in.
      */
     private void onReceiveClearCommand(MessageChannel channel){
         //TODO: implement
-        channel.sendMessage("Are you sure you'd like to clear the collection?")
-                .setActionRow(
-                    Button.primary("Confirm", "Confirm"),
-                    Button.primary("Cancel", "Cancel"))
-                .queue();
-        //add checkmark and x buttons for confirmation
+        if (m.isEmpty()){
+            channel.sendMessage("The collection is already empty.").queue();
+        }
+        else {
+            channel.sendMessage("Are you sure you'd like to clear the collection?")
+                    .setActionRow(
+                            Button.primary("Yes", "Yes"),
+                            Button.primary("No", "No"))
+                    .queue();
+        }
     }
 
     /**
@@ -241,16 +249,16 @@ public class ArtListener extends ListenerAdapter {
         channel.sendMessage("**Text Commands**\n " +
                     "(these are preceeded by '" + ArtBot.PREFIX + "' )" +
                     "\n\nadd [Twitter Link]   -- add a Twitter link to the bot's collection" +
-                    "\nshowCollection       -- show the bot's current collection of Artists and their handles with nav buttons" +
-                    "\nclearCollection      -- empty the collection of all entries" +
-                    "\nhelp                 -- show commands help" +
+                    "\nshowCollection        -- show the bot's current collection of Artists and their handles with nav buttons" +
+                    "\nclearCollection         -- empty the collection of all entries" +
+                    "\nhelp                             -- show commands help" +
                     "\n\n**Nav Button Commands**" +
                     "\n(these are attached to embeds)" +
-                    "\n\nNext                  -- move to the next entry in the collection" +
-                    "\nPrevious                  -- move to the previous entry in the collection" +
-                    "\nEnter                 -- Only Available in DisplayArtists Mode: show the displayed Artist's collection of art" +
-                    "\nExit                  -- DisplayArtists Mode: stop displaying the collection, DisplayArt Mode: return to Artist view" +
-                    "\nRemove                -- Remove the displayed Artist or Art and update the display appropriately")
+                    "\n\nNext                          -- move to the next entry in the collection" +
+                    "\nPrevious                   -- move to the previous entry in the collection" +
+                    "\nEnter                         -- Only Available in DisplayArtists Mode: show the displayed Artist's collection of art" +
+                    "\nExit                            -- DisplayArtists Mode: stop displaying the collection, DisplayArt Mode: return to Artist view" +
+                    "\nRemove                    -- Remove the displayed Artist or Art and update the display appropriately")
                 .queue();
     }
 
@@ -291,14 +299,18 @@ public class ArtListener extends ListenerAdapter {
         event.editMessage(linkToDisplay).queue();
     }
 
+    /**
+     * Displays the displayed artist's colleection of art links.
+     *
+     * @param event Button click that triggered this command.
+     * @precond displayMode is DisplayArtists.
+     */
     private void onClickEnter(ButtonInteractionEvent event){
         //TODO: implement
-
-        //Precond: assume we are in DisplayArtists mode, currently displayed artist link is stored in field
-        //Grab array of values from map for artist
-        //set array in iterator to this array
-        //call next with the same event param
-        //set mode to displayArt
+        links.setArray(m.getValuesForKey(displayedArtist).toArray(new String[0]));
+        event.editMessage(links.next()).queue();
+        event.editButton(event.getButton().asDisabled()).queue(); //disable enter button
+        displayMode = DisplayModeEnum.DisplayArt;
     }
 
     /**
@@ -315,7 +327,15 @@ public class ArtListener extends ListenerAdapter {
             displayMode = DisplayModeEnum.DisplayArtists;
             links.setArray(m.getKeys().toArray(new String[0]));
             displayedArtist = links.next();
-            event.editMessage(displayedArtist).queue();
+
+            //Edit Message
+            event.editMessage(displayedArtist)
+                    .setActionRow(
+                        Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID),
+                        Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID),
+                        Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID),
+                        Button.primary(ENTER_BUTTON_ID, ENTER_BUTTON_ID)) //TODO: turn this into a method?
+                    .queue();
         }
         else { //Displaying Artists --> close display
             exitDisplay();
@@ -392,7 +412,8 @@ public class ArtListener extends ListenerAdapter {
                     .setActionRow(
                             Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID),
                             Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID),
-                            Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID))
+                            Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID),
+                            Button.primary(ENTER_BUTTON_ID, ENTER_BUTTON_ID))
                     //TODO: add more buttons
                     .queue(
                             message -> displayMessage = message);

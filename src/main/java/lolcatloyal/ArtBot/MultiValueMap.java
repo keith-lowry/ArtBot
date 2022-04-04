@@ -149,4 +149,11 @@ public class MultiValueMap<K extends Comparable<K>, V> {
         map = new TreeMap<K, List<V>>();
     }
 
+    /**
+     * Checks whether the map is empty.
+     *
+     * @return True if the map is empty.
+     */
+    public boolean isEmpty() { return map.isEmpty(); }
+
 }
