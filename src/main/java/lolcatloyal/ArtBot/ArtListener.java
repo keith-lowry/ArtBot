@@ -1,6 +1,5 @@
 package lolcatloyal.ArtBot;
 
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -42,7 +41,7 @@ public class ArtListener extends ListenerAdapter {
     private final MultiValueMap<String, String> m; //collection of art -- Artist links are keys, Art links are values
     //private final EmbedBuilder eb;
     private String displayedArtist; //String link to currently displayed Artist
-    private final ArrayIterator<String> displayedLinks; //Iterator for currently displayed links
+    private final ArrayIterator<String> links; //Iterator for currently displayed links
     private DisplayModeEnum displayMode;
     private Message displayMessage; //message displaying collection
 
@@ -55,6 +54,7 @@ public class ArtListener extends ListenerAdapter {
     //Nav Buttons
     private static final String NEXT_BUTTON_ID = "Next";
     private static final String PREV_BUTTON_ID = "Previous";
+    private static final String EXIT_BUTTON_ID = "Exit";
     //TODO: add more button
 
 
@@ -78,7 +78,7 @@ public class ArtListener extends ListenerAdapter {
     public ArtListener(){
         m = new MultiValueMap<>();
         //eb = new EmbedBuilder();
-        displayedLinks = new ArrayIterator<>(new String[0]);
+        links = new ArrayIterator<>(new String[0]);
         displayMode = DisplayModeEnum.DisplayOff;
         displayMessage = null;
     }
@@ -98,19 +98,22 @@ public class ArtListener extends ListenerAdapter {
      * @param event A ButtonInteractionEvent.
      */
     public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
-        //TODO: check if button id matches
-        if(event.getChannel().getId().equals(ArtBot.CHANNEL_ID)){
-            MessageChannel channel = event.getChannel();
-            switch(event.getComponentId()){
-                case PREV_BUTTON_ID:
-                    event.reply("Previous!").queue();
-                    break;
-                case NEXT_BUTTON_ID:
-                    event.reply("Next!").queue();
-                    //Important -- need to acknowledge interaction with reply, edit, etc
-                    break;
-                default:
-                    break;
+        if (displayMessage != null) { //Display is on
+            if (displayMessage.getId().equals(event.getMessageId())) { //Click on our DisplayMessage
+                MessageChannel channel = event.getChannel();
+                switch (event.getComponentId()) {
+                    case PREV_BUTTON_ID:
+                        onClickPrev(event);
+                        break;
+                    case NEXT_BUTTON_ID:
+                        onClickNext(event);
+                        break;
+                    case EXIT_BUTTON_ID:
+                        onClickExit(event);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
@@ -146,7 +149,7 @@ public class ArtListener extends ListenerAdapter {
             }
             //-showCollection
             else if (showCollMatcher.find()){
-                onReceiveShowCommand(event, channel);
+                onReceiveShowCommand(channel);
             }
             //-clearCollection
             else if (clearCollMatcher.find()){
@@ -154,7 +157,7 @@ public class ArtListener extends ListenerAdapter {
             }
             //-help
             else if (helpMatcher.find()){
-                onReceiveHelpCommand(event, channel);
+                onReceiveHelpCommand(channel);
             }
         }
     }
@@ -210,7 +213,7 @@ public class ArtListener extends ListenerAdapter {
      *
      * @param channel The MessageChannel to display the collection of artists in.
      */
-    private void onReceiveShowCommand(MessageReceivedEvent event, @NotNull MessageChannel channel){
+    private void onReceiveShowCommand(@NotNull MessageChannel channel){
         openDisplay(channel);
     }
 
@@ -221,34 +224,71 @@ public class ArtListener extends ListenerAdapter {
      */
     private void onReceiveClearCommand(MessageChannel channel){
         //TODO: implement
-        channel.sendMessage("Are you sure you'd like to clear the collection?").queue();
+        channel.sendMessage("Are you sure you'd like to clear the collection?")
+                .setActionRow(
+                    Button.primary("Confirm", "Confirm"),
+                    Button.primary("Cancel", "Cancel"))
+                .queue();
         //add checkmark and x buttons for confirmation
     }
 
-    private void onReceiveHelpCommand(MessageReceivedEvent event, MessageChannel channel){
-        //TODO: implement
-
-        //show all commands and their descriptions
-        //show all nav buttons and their descriptions
+    /**
+     * Displays a message describing and explaining user commands.
+     *
+     * @param event MessageReceivedEvent that triggered this command.
+     */
+    private void onReceiveHelpCommand(MessageChannel channel){
+        channel.sendMessage("**Text Commands**\n " +
+                    "(these are preceeded by '" + ArtBot.PREFIX + "' )" +
+                    "\n\nadd [Twitter Link]   -- add a Twitter link to the bot's collection" +
+                    "\nshowCollection       -- show the bot's current collection of Artists and their handles with nav buttons" +
+                    "\nclearCollection      -- empty the collection of all entries" +
+                    "\nhelp                 -- show commands help" +
+                    "\n\n**Nav Button Commands**" +
+                    "\n(these are attached to embeds)" +
+                    "\n\nNext                  -- move to the next entry in the collection" +
+                    "\nPrevious                  -- move to the previous entry in the collection" +
+                    "\nEnter                 -- Only Available in DisplayArtists Mode: show the displayed Artist's collection of art" +
+                    "\nExit                  -- DisplayArtists Mode: stop displaying the collection, DisplayArt Mode: return to Artist view" +
+                    "\nRemove                -- Remove the displayed Artist or Art and update the display appropriately")
+                .queue();
     }
 
     //--- Nav Button Commands --------------------------------------------------------------
-    private void onClickNext(ButtonInteractionEvent event){
-        //TODO: implement
 
+    /**
+     * Displays the next link in the iterator.
+     *
+     * @param event Button click that triggered this command.
+     * @precond The display is on.
+     */
+    private void onClickNext(ButtonInteractionEvent event){
         //Get next link in iterator
-            //If DisplayArtists, set displayedArtist equal to it
-        //Edit original message to use this link
-            //Ensures nav buttons remain?
+        String linkToDisplay = links.next();
+
+        //Set displayedArtist if needed
+        if (displayMode.equals(DisplayModeEnum.DisplayArtists)){
+            displayedArtist = linkToDisplay;
+        }
+
+        //Edit message to display next link
+        event.editMessage(linkToDisplay).queue();
     }
 
+    /**
+     * Displays the previous link in the iterator.
+     *
+     * @param event Button click that triggered this command.
+     * @orecond The display is on.
+     */
     private void onClickPrev(ButtonInteractionEvent event){
-        //TODO: implement
+        String linkToDisplay = links.prev();
 
-        //Get prev link in iterator
-            //If DisplayArtists, set displayedArtist equal to it
-        //Edit original message to use this link
-            //Ensures nav buttons remain?
+        if(displayMode.equals(DisplayModeEnum.DisplayArtists)){
+            displayedArtist = linkToDisplay;
+        }
+
+        event.editMessage(linkToDisplay).queue();
     }
 
     private void onClickEnter(ButtonInteractionEvent event){
@@ -261,13 +301,25 @@ public class ArtListener extends ListenerAdapter {
         //set mode to displayArt
     }
 
+    /**
+     * Exits the display depending on the display's current mode.
+     * If artists are being displayed, closes the display entirely.
+     * If art is being displayed, returns to display of artists.
+     *
+     * @param event The Button click that triggered this command.
+     * @precond The display is on.
+     */
     private void onClickExit(ButtonInteractionEvent event){
-        //TODO: implement
-
-        //Display Art: return to view of artists in collection
-            //displayArtistCollection()
-        //Display Artists: exit display
-            //exitDisplay()
+        //Displaying Art --> return to DisplayArtists Mode
+        if(displayMode.equals(DisplayModeEnum.DisplayArt)){
+            displayMode = DisplayModeEnum.DisplayArtists;
+            links.setArray(m.getKeys().toArray(new String[0]));
+            displayedArtist = links.next();
+            event.editMessage(displayedArtist).queue();
+        }
+        else { //Displaying Artists --> close display
+            exitDisplay();
+        }
     }
 
     private void onClickRemove(ButtonInteractionEvent event){
@@ -323,7 +375,7 @@ public class ArtListener extends ListenerAdapter {
      */
     private void openDisplay(MessageChannel channel){
         if(!displayMode.equals(DisplayModeEnum.DisplayOff)){
-            exitDisplay(channel);
+            exitDisplay();
         }
 
         String[] keys = m.getKeys().toArray(new String[0]);
@@ -333,13 +385,14 @@ public class ArtListener extends ListenerAdapter {
         }
         else { //Show artists!
             displayMode = DisplayModeEnum.DisplayArtists;
-            displayedLinks.setArray(m.getKeys().toArray(new String[0]));
-            displayedArtist = displayedLinks.next();
+            links.setArray(m.getKeys().toArray(new String[0]));
+            displayedArtist = links.next();
 
             channel.sendMessage(displayedArtist)
                     .setActionRow(
                             Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID),
-                            Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID))
+                            Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID),
+                            Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID))
                     //TODO: add more buttons
                     .queue(
                             message -> displayMessage = message);
@@ -350,10 +403,8 @@ public class ArtListener extends ListenerAdapter {
 
     /**
      * Closes the collection display if it is open.
-     *
-     * @param channel The channel the display is open in.
      */
-    private void exitDisplay(MessageChannel channel){
+    private void exitDisplay(){
         if (!displayMode.equals(DisplayModeEnum.DisplayOff)){
             //Delete Embed
             displayMessage.delete().queue();
@@ -364,7 +415,7 @@ public class ArtListener extends ListenerAdapter {
 
             //Null Out Displayed Artist and Displayed Links Array
             displayedArtist = null;
-            displayedLinks.setArray(null);
+            links.setArray(null);
         }
     }
 }
