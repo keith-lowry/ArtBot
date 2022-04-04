@@ -37,12 +37,12 @@ import java.util.regex.Pattern;
  * Exit                  -- DisplayArtists Mode: stop displaying the collection, DisplayArt Mode: return to Artist view
  * Remove                -- Remove the displayed Artist or Art and update the display appropriately
  */
-@SuppressWarnings("StatementWithEmptyBody")
+@SuppressWarnings("ALL")
 public class ArtListener extends ListenerAdapter {
     private final MultiValueMap<String, String> m; //collection of art -- Artist links are keys, Art links are values
-    private final EmbedBuilder eb;
+    //private final EmbedBuilder eb;
     private String displayedArtist; //String link to currently displayed Artist
-    private ArrayIterator<String> displayedLinks; //Iterator for currently displayed links
+    private final ArrayIterator<String> displayedLinks; //Iterator for currently displayed links
     private DisplayModeEnum displayMode;
     private Message displayMessage; //message displaying collection
 
@@ -53,8 +53,9 @@ public class ArtListener extends ListenerAdapter {
     private static final Pattern HELP_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "help$");
 
     //Nav Buttons
-    private static final Button PREV_BUTTON = Button.primary("PrevButton", "Previous");
-    private static final Button NEXT_BUTTON = Button.primary("NextButton", "Next");
+    private static final String NEXT_BUTTON_ID = "Next";
+    private static final String PREV_BUTTON_ID = "Previous";
+    //TODO: add more button
 
 
     /**
@@ -76,7 +77,7 @@ public class ArtListener extends ListenerAdapter {
      */
     public ArtListener(){
         m = new MultiValueMap<>();
-        eb = new EmbedBuilder();
+        //eb = new EmbedBuilder();
         displayedLinks = new ArrayIterator<>(new String[0]);
         displayMode = DisplayModeEnum.DisplayOff;
         displayMessage = null;
@@ -98,6 +99,20 @@ public class ArtListener extends ListenerAdapter {
      */
     public void onButtonInteraction(@Nonnull ButtonInteractionEvent event) {
         //TODO: check if button id matches
+        if(event.getChannel().getId().equals(ArtBot.CHANNEL_ID)){
+            MessageChannel channel = event.getChannel();
+            switch(event.getComponentId()){
+                case PREV_BUTTON_ID:
+                    event.reply("Previous!").queue();
+                    break;
+                case NEXT_BUTTON_ID:
+                    event.reply("Next!").queue();
+                    //Important -- need to acknowledge interaction with reply, edit, etc
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     /**
@@ -167,10 +182,8 @@ public class ArtListener extends ListenerAdapter {
             artLink = LinkUtil.twitToFXLink(artLink);
         }
 
-        String artistLink = "";
-
         //Build Twitter Profile Link
-        artistLink = LinkUtil.buildTwitProfileLink(artLink);
+        String artistLink = LinkUtil.buildTwitProfileLink(artLink);
 
         //Try to add to map
         if (m.addValue(artistLink, artLink)) {
@@ -325,11 +338,12 @@ public class ArtListener extends ListenerAdapter {
 
             channel.sendMessage(displayedArtist)
                     .setActionRow(
-                            PREV_BUTTON,
-                            NEXT_BUTTON)
+                            Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID),
+                            Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID))
+                    //TODO: add more buttons
                     .queue(
                             message -> displayMessage = message);
-            //TODO: add actionrow
+
 
         }
     }
