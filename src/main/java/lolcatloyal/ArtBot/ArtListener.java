@@ -1,12 +1,12 @@
 package lolcatloyal.ArtBot;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -51,6 +51,11 @@ public class ArtListener extends ListenerAdapter {
     private static final Pattern SHOW_COLL_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "showCollection$");
     private static final Pattern CLEAR_COLL_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "clearCollection$");
     private static final Pattern HELP_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "help$");
+
+    //Nav Buttons
+    private static final Button PREV_BUTTON = Button.primary("PrevButton", "Previous");
+    private static final Button NEXT_BUTTON = Button.primary("NextButton", "Next");
+
 
     /**
      * Enum determining what the Bot is currently displaying.
@@ -150,7 +155,7 @@ public class ArtListener extends ListenerAdapter {
     private void onReceiveAddCommand(@NotNull MessageChannel channel, @NotNull String messageRaw){
         channel.sendMessage("I'll try to add that for you!").queue();
 
-        String artLink = LinkUtil.trimLink(messageRaw.substring(5)); //remove command portion of command and trim to link
+        String artLink = LinkUtil.trimLink(messageRaw.substring(5)); //remove command portion of message; trim to link
         int linkType = LinkUtil.determineLinkType(artLink);
 
         if (linkType == -1){ //Invalid link
@@ -170,7 +175,13 @@ public class ArtListener extends ListenerAdapter {
         //Try to add to map
         if (m.addValue(artistLink, artLink)) {
             //Send Confirmation Message
-            channel.sendMessage("Added! \n" + artistLink + "\n" + artLink).queue();
+            channel.sendMessage("Added!").queue();
+
+            //Restart Display if Open Already
+            if (!displayMode.equals(DisplayModeEnum.DisplayOff)){
+                openDisplay(channel);
+                channel.sendMessage("Reloaded the display for you!").queue();
+            }
         }
         else {
             //Send Failure Message
@@ -187,11 +198,7 @@ public class ArtListener extends ListenerAdapter {
      * @param channel The MessageChannel to display the collection of artists in.
      */
     private void onReceiveShowCommand(MessageReceivedEvent event, @NotNull MessageChannel channel){
-        if (!displayMode.equals(DisplayModeEnum.DisplayOff)){ //Collection Already Displayed
-            exitDisplay();
-        }
-
-        displayCollection(channel);
+        openDisplay(channel);
     }
 
     /**
@@ -296,10 +303,16 @@ public class ArtListener extends ListenerAdapter {
 
     /**
      * Displays the current collection of Artists, if there are any.
+     * If the collection is already being displayed, closes and
+     * reopens it.
      *
      * @param channel MessageChannel to display Artists in.
      */
-    private void displayCollection(MessageChannel channel){
+    private void openDisplay(MessageChannel channel){
+        if(!displayMode.equals(DisplayModeEnum.DisplayOff)){
+            exitDisplay(channel);
+        }
+
         String[] keys = m.getKeys().toArray(new String[0]);
 
         if (keys.length == 0) { //No Artists to show :(
@@ -310,27 +323,34 @@ public class ArtListener extends ListenerAdapter {
             displayedLinks.setArray(m.getKeys().toArray(new String[0]));
             displayedArtist = displayedLinks.next();
 
-            MessageBuilder m = new MessageBuilder();
-            m.append(displayedArtist);
-            //TODO: add action row
-            displayMessage = m.build();
-            channel.sendMessage(displayMessage).queue();
+            channel.sendMessage(displayedArtist)
+                    .setActionRow(
+                            PREV_BUTTON,
+                            NEXT_BUTTON)
+                    .queue(
+                            message -> displayMessage = message);
+            //TODO: add actionrow
+
         }
     }
 
     /**
-     * Closes the collection display.
+     * Closes the collection display if it is open.
+     *
+     * @param channel The channel the display is open in.
      */
-    private void exitDisplay(){
-        //Delete Embed
-        displayMessage.delete().queue();
-        displayMessage = null;
+    private void exitDisplay(MessageChannel channel){
+        if (!displayMode.equals(DisplayModeEnum.DisplayOff)){
+            //Delete Embed
+            displayMessage.delete().queue();
+            displayMessage = null;
 
-        //Set Display Mode to DisplayOff
-        displayMode = DisplayModeEnum.DisplayOff;
+            //Set Display Mode to DisplayOff
+            displayMode = DisplayModeEnum.DisplayOff;
 
-        //Null Out Displayed Artist and Displayed Links Array
-        displayedArtist = null;
-        displayedLinks.setArray(null);
+            //Null Out Displayed Artist and Displayed Links Array
+            displayedArtist = null;
+            displayedLinks.setArray(null);
+        }
     }
 }
