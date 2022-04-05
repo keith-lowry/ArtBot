@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,10 +54,15 @@ public class ArtListener extends ListenerAdapter {
     private static final Pattern HELP_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "help$");
 
     //Nav Buttons
-    private static final String NEXT_BUTTON_ID = "Next";
     private static final String PREV_BUTTON_ID = "Previous";
+    private static final String NEXT_BUTTON_ID = "Next";
     private static final String EXIT_BUTTON_ID = "Exit";
     private static final String ENTER_BUTTON_ID = "Enter";
+    private static final List<Button> actionRow = Arrays.asList(
+                    Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID),
+                    Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID),
+                    Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID),
+                    Button.primary(ENTER_BUTTON_ID, ENTER_BUTTON_ID));
     //TODO: add more buttons
 
 
@@ -306,7 +313,6 @@ public class ArtListener extends ListenerAdapter {
      * @precond displayMode is DisplayArtists.
      */
     private void onClickEnter(ButtonInteractionEvent event){
-        //TODO: implement
         links.setArray(m.getValuesForKey(displayedArtist).toArray(new String[0]));
         event.editMessage(links.next()).queue();
         event.editButton(event.getButton().asDisabled()).queue(); //disable enter button
@@ -330,11 +336,7 @@ public class ArtListener extends ListenerAdapter {
 
             //Edit Message
             event.editMessage(displayedArtist)
-                    .setActionRow(
-                        Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID),
-                        Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID),
-                        Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID),
-                        Button.primary(ENTER_BUTTON_ID, ENTER_BUTTON_ID)) //TODO: turn this into a method?
+                    .setActionRow(actionRow)
                     .queue();
         }
         else { //Displaying Artists --> close display
@@ -409,16 +411,8 @@ public class ArtListener extends ListenerAdapter {
             displayedArtist = links.next();
 
             channel.sendMessage(displayedArtist)
-                    .setActionRow(
-                            Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID),
-                            Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID),
-                            Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID),
-                            Button.primary(ENTER_BUTTON_ID, ENTER_BUTTON_ID))
-                    //TODO: add more buttons
-                    .queue(
-                            message -> displayMessage = message);
-
-
+                    .setActionRow(actionRow)
+                    .queue(message -> displayMessage = message);
         }
     }
 
