@@ -148,6 +148,9 @@ public class ArtListener extends ListenerAdapter {
                     case CANCEL_BUTTON_ID:
                         onClickCancelRemove(event);
                         break;
+                    case CONFIRM_BUTTON_ID:
+                        onClickConfirmRemove(event);
+                        break;
                 }
             }
         }
@@ -398,8 +401,10 @@ public class ArtListener extends ListenerAdapter {
     }
 
     private void onClickCancelRemove(ButtonInteractionEvent event){
-        //Confirm Action Was Canceled
-        event.editMessage("Cancelled!").queue();
+        //Send Cancellation Message
+        event.editMessage("Cancelled!").setActionRows().queue();
+
+        //Display Off
         displayMode = DisplayModeEnum.DisplayOff;
     }
 
