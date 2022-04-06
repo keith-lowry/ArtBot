@@ -44,6 +44,10 @@ public class ArtListener extends ListenerAdapter {
     //private final EmbedBuilder eb;
     private String displayedArtist; //String link to currently displayed Artist
     private String displayedArt; //String link to currently displayed Art
+    private static final String removeArtPrompt = "Remove Art? \n";
+    private static final String removeArtistPrompt = "Remove Artist? \n";
+    private static final String removeFailureResponse ="Sorry, I couldn't remove that.";
+    private static final String removeSuccessResponse = "Removed!";
     private final ArrayIterator<String> links; //Iterator for currently displayed links
     private DisplayModeEnum displayMode;
     private Message displayMessage; //message displaying collection
@@ -142,7 +146,7 @@ public class ArtListener extends ListenerAdapter {
                         onClickRemove(event);
                         break;
                     case CANCEL_BUTTON_ID:
-                        onClickCancel(event);
+                        onClickCancelRemove(event);
                         break;
                 }
             }
@@ -380,34 +384,56 @@ public class ArtListener extends ListenerAdapter {
      * @precond The display is on.
      */
     private void onClickRemove(ButtonInteractionEvent event){
-        //TODO: add prompt message fields
-
         //Delete Artist - Send prompt message
         if(displayMode.equals(DisplayModeEnum.DisplayArtists)){
-            event.editMessage("Delete Artist? \n" + displayedArtist).setActionRow(promptActionRow).queue();
+            event.editMessage(removeArtistPrompt + displayedArtist).setActionRow(promptActionRow).queue();
         }
         //Delete Art - Send prompt message
         else {
-            event.editMessage("Delete Art? \n" + displayedArt).setActionRow(promptActionRow).queue();
+            event.editMessage(removeArtPrompt + displayedArt).setActionRow(promptActionRow).queue();
         }
 
         //Now Displaying a Prompt
         displayMode = DisplayModeEnum.DisplayPrompt;
     }
 
-    private void onClickCancel(ButtonInteractionEvent event){
+    private void onClickCancelRemove(ButtonInteractionEvent event){
         //Confirm Action Was Canceled
         event.editMessage("Cancelled!").queue();
         displayMode = DisplayModeEnum.DisplayOff;
     }
 
-    private void onClickConfirm(ButtonInteractionEvent event){
+    /**
+     * Attempts to remove the desired entry (Artist or Art).
+     *
+     * @param event Button click that triggered this action.
+     * @precond Display is on.
+     */
+    private void onClickConfirmRemove(ButtonInteractionEvent event){
+        boolean success = false;
+
+        //Remove Artist
+        if(event.getMessage().getContentRaw().contains(removeArtistPrompt)){
+            success = m.removeKey(displayedArtist);
+        }
+        //Remove Art
+        else {
+            success = m.removeValue(displayedArtist, displayedArt);
+        }
+
+        //Close Display
+        exitDisplay();
+
+        //Send Conrimation Message
+        if (success) {
+            event.reply(removeSuccessResponse).queue();
+        }
+        else {
+            event.reply(removeFailureResponse).queue();
+        }
+
+
         //TODO: implement
-        //parse original message (if string.contains("delete"), else)
-            //trying to clear collection
-                //delete original message
-                //m.clear();
-                //send confirmation message: "Collection cleared!"
             //trying to delete an entry
                 //grab original message string, delete original message
                     //split string about " "
