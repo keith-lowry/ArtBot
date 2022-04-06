@@ -58,11 +58,18 @@ public class ArtListener extends ListenerAdapter {
     private static final String NEXT_BUTTON_ID = "Next";
     private static final String EXIT_BUTTON_ID = "Exit";
     private static final String ENTER_BUTTON_ID = "Enter";
-    private static final List<Button> actionRow = Arrays.asList(
+    private static final String REMOVE_BUTTON_ID = "Remove";
+    private static final String CONFIRM_BUTTON_ID = "Confirm";
+    private static final String CANCEL_BUTTON_ID = "Cancel";
+    private static final List<Button> navActionRow = Arrays.asList(     //Action row for navigating collection
                     Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID),
                     Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID),
                     Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID),
-                    Button.primary(ENTER_BUTTON_ID, ENTER_BUTTON_ID));
+                    Button.primary(ENTER_BUTTON_ID, ENTER_BUTTON_ID),
+                    Button.primary(REMOVE_BUTTON_ID, REMOVE_BUTTON_ID));
+    private static final List<Button> promptActionRow = Arrays.asList(   //Action row for confirmation prompt
+                    Button.primary(CONFIRM_BUTTON_ID, CONFIRM_BUTTON_ID),
+                    Button.primary(CANCEL_BUTTON_ID, CANCEL_BUTTON_ID));
     //TODO: add more buttons
 
 
@@ -336,7 +343,7 @@ public class ArtListener extends ListenerAdapter {
 
             //Edit Message
             event.editMessage(displayedArtist)
-                    .setActionRow(actionRow)
+                    .setActionRow(navActionRow)
                     .queue();
         }
         else { //Displaying Artists --> close display
@@ -411,7 +418,7 @@ public class ArtListener extends ListenerAdapter {
             displayedArtist = links.next();
 
             channel.sendMessage(displayedArtist)
-                    .setActionRow(actionRow)
+                    .setActionRow(navActionRow)
                     .queue(message -> displayMessage = message);
         }
     }
