@@ -43,6 +43,7 @@ public class ArtListener extends ListenerAdapter {
     private final MultiValueMap<String, String> m; //collection of art -- Artist links are keys, Art links are values
     //private final EmbedBuilder eb;
     private String displayedArtist; //String link to currently displayed Artist
+    private String displayedArt; //String link to currently displayed Art
     private final ArrayIterator<String> links; //Iterator for currently displayed links
     private DisplayModeEnum displayMode;
     private Message displayMessage; //message displaying collection
@@ -59,18 +60,25 @@ public class ArtListener extends ListenerAdapter {
     private static final String EXIT_BUTTON_ID = "Exit";
     private static final String ENTER_BUTTON_ID = "Enter";
     private static final String REMOVE_BUTTON_ID = "Remove";
-    private static final String CONFIRM_BUTTON_ID = "Confirm";
-    private static final String CANCEL_BUTTON_ID = "Cancel";
     private static final List<Button> navActionRow = Arrays.asList(     //Action row for navigating collection
                     Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID),
                     Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID),
                     Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID),
                     Button.primary(ENTER_BUTTON_ID, ENTER_BUTTON_ID),
                     Button.primary(REMOVE_BUTTON_ID, REMOVE_BUTTON_ID));
+    private static final List<Button> disabledNavActionRow = Arrays.asList(
+                    Button.primary(PREV_BUTTON_ID, PREV_BUTTON_ID).asDisabled(),
+                    Button.primary(NEXT_BUTTON_ID, NEXT_BUTTON_ID).asDisabled(),
+                    Button.primary(EXIT_BUTTON_ID, EXIT_BUTTON_ID).asDisabled(),
+                    Button.primary(ENTER_BUTTON_ID, ENTER_BUTTON_ID).asDisabled(),
+                    Button.primary(REMOVE_BUTTON_ID, REMOVE_BUTTON_ID).asDisabled());
+    
+    //Confirmation Buttons
+    private static final String CONFIRM_BUTTON_ID = "Confirm";
+    private static final String CANCEL_BUTTON_ID = "Cancel";
     private static final List<Button> promptActionRow = Arrays.asList(   //Action row for confirmation prompt
                     Button.primary(CONFIRM_BUTTON_ID, CONFIRM_BUTTON_ID),
                     Button.primary(CANCEL_BUTTON_ID, CANCEL_BUTTON_ID));
-    //TODO: add more buttons
 
 
     /**
@@ -83,7 +91,8 @@ public class ArtListener extends ListenerAdapter {
     private enum DisplayModeEnum{
         DisplayOff,
         DisplayArtists,
-        DisplayArt
+        DisplayArt,
+        DisplayPrompt
     }
 
     /**
@@ -128,7 +137,12 @@ public class ArtListener extends ListenerAdapter {
                         break;
                     case ENTER_BUTTON_ID:
                         onClickEnter(event);
-                    default:
+                        break;
+                    case REMOVE_BUTTON_ID:
+                        onClickRemove(event);
+                        break;
+                    case CANCEL_BUTTON_ID:
+                        onClickCancel(event);
                         break;
                 }
             }
@@ -292,6 +306,10 @@ public class ArtListener extends ListenerAdapter {
         if (displayMode.equals(DisplayModeEnum.DisplayArtists)){
             displayedArtist = linkToDisplay;
         }
+        //Set displayedArt if needed
+        else {
+            displayedArt = linkToDisplay;
+        }
 
         //Edit message to display next link
         event.editMessage(linkToDisplay).queue();
@@ -306,8 +324,11 @@ public class ArtListener extends ListenerAdapter {
     private void onClickPrev(ButtonInteractionEvent event){
         String linkToDisplay = links.prev();
 
-        if(displayMode.equals(DisplayModeEnum.DisplayArtists)){
+        if (displayMode.equals(DisplayModeEnum.DisplayArtists)){
             displayedArtist = linkToDisplay;
+        }
+        else {
+            displayedArt = linkToDisplay;
         }
 
         event.editMessage(linkToDisplay).queue();
@@ -321,7 +342,8 @@ public class ArtListener extends ListenerAdapter {
      */
     private void onClickEnter(ButtonInteractionEvent event){
         links.setArray(m.getValuesForKey(displayedArtist).toArray(new String[0]));
-        event.editMessage(links.next()).queue();
+        displayedArt = links.next();
+        event.editMessage(displayedArt).queue();
         event.editButton(event.getButton().asDisabled()).queue(); //disable enter button
         displayMode = DisplayModeEnum.DisplayArt;
     }
@@ -340,6 +362,7 @@ public class ArtListener extends ListenerAdapter {
             displayMode = DisplayModeEnum.DisplayArtists;
             links.setArray(m.getKeys().toArray(new String[0]));
             displayedArtist = links.next();
+            displayedArt = null;
 
             //Edit Message
             event.editMessage(displayedArtist)
@@ -351,24 +374,31 @@ public class ArtListener extends ListenerAdapter {
         }
     }
 
+    /**
+     *
+     * @param event The Button click that triggered this command.
+     * @precond The display is on.
+     */
     private void onClickRemove(ButtonInteractionEvent event){
-        //TODO: implement
-        //grab link, and mode from original message
+        //TODO: add prompt message fields
 
-        //Ask for confirmation
-            //Display Artists
-                //Send message asking for confirmation: "Delete Artist " + link + "?"
-            //Display Art
-                //Send message asking for confirmation: "Delete Art " + link + " by " + displayedArtist + "?"
-            //add checkmark and x emoji buttons to accept response
+        //Delete Artist - Send prompt message
+        if(displayMode.equals(DisplayModeEnum.DisplayArtists)){
+            event.editMessage("Delete Artist? \n" + displayedArtist).setActionRow(promptActionRow).queue();
+        }
+        //Delete Art - Send prompt message
+        else {
+            event.editMessage("Delete Art? \n" + displayedArt).setActionRow(promptActionRow).queue();
+        }
 
-        //set mode to displayOff null out displayedArtist
+        //Now Displaying a Prompt
+        displayMode = DisplayModeEnum.DisplayPrompt;
     }
 
     private void onClickCancel(ButtonInteractionEvent event){
-        //TODO: implement
-        //delete original message
-        //send confirmation message: "Action canceled!"
+        //Confirm Action Was Canceled
+        event.editMessage("Cancelled!").queue();
+        displayMode = DisplayModeEnum.DisplayOff;
     }
 
     private void onClickConfirm(ButtonInteractionEvent event){
@@ -403,10 +433,12 @@ public class ArtListener extends ListenerAdapter {
      * @param channel MessageChannel to display Artists in.
      */
     private void openDisplay(MessageChannel channel){
+        //Close display if it's already open
         if(!displayMode.equals(DisplayModeEnum.DisplayOff)){
             exitDisplay();
         }
 
+        //Get Artists
         String[] keys = m.getKeys().toArray(new String[0]);
 
         if (keys.length == 0) { //No Artists to show :(
