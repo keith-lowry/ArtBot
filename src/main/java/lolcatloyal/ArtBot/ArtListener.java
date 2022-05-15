@@ -57,6 +57,8 @@ public class ArtListener extends ListenerAdapter {
     private static final Pattern SHOW_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "show$");
     private static final Pattern CLEAR_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "clear$");
     private static final Pattern HELP_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "help$");
+    private static final Pattern QUIT_COMMAND_PATTERN = Pattern.compile("^" + ArtBot.PREFIX + "quit$");
+    //TODO: remove patterns for simple commands (EVERYTHING OTHER THAN ADD COMMAND), can just use String.equals()
 
     //Nav Buttons
     private static final String PREV_BUTTON_ID = "Previous";
@@ -180,6 +182,7 @@ public class ArtListener extends ListenerAdapter {
             Matcher showMatcher = SHOW_COMMAND_PATTERN.matcher(messageRaw);
             Matcher clearMatcher = CLEAR_COMMAND_PATTERN.matcher(messageRaw);
             Matcher helpMatcher = HELP_COMMAND_PATTERN.matcher(messageRaw);
+            Matcher quitMatcher = QUIT_COMMAND_PATTERN.matcher(messageRaw);
 
             //-add [Twitter Link]
             if (addMatcher.find()) {
@@ -196,6 +199,10 @@ public class ArtListener extends ListenerAdapter {
             //-help
             else if (helpMatcher.find()){
                 onReceiveHelpCommand(channel);
+            }
+            //-quit
+            else if (quitMatcher.find()){
+                System.exit(0);
             }
         }
     }
@@ -287,6 +294,7 @@ public class ArtListener extends ListenerAdapter {
                     "\nshowCollection        -- show the bot's current collection of Artists and their handles with nav buttons" +
                     "\nclearCollection         -- empty the collection of all entries" +
                     "\nhelp                             -- show commands help" +
+                    "\nquit                             -- shut down the bot" +
                     "\n\n**Nav Button Commands**" +
                     "\n(these are attached to embeds)" +
                     "\n\nNext                          -- move to the next entry in the collection" +
@@ -429,7 +437,7 @@ public class ArtListener extends ListenerAdapter {
         //Close Display
         exitDisplay();
 
-        //Send Conrimation Message
+        //Send Confirmation Message
         if (success) {
             event.reply(removeSuccessResponse).queue();
         }
