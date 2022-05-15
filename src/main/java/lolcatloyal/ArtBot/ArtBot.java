@@ -17,8 +17,7 @@ public class ArtBot {
     public static JDABuilder builder;
 
     public static final String PREFIX = "-"; //Command Prefix
-    //TODO: change CHANNEL_ID back to General for Bot Test Server
-    public static final String CHANNEL_ID = "799486667253350441"; //ID for TextChannel
+    public static final String CHANNEL_ID = "875121326921248791"; //ID for TextChannel
     public static final String ADD_COMMAND = PREFIX + "add";
     public static final String SHOW_ARTISTS_COMMAND = PREFIX + "showArtists";
     //TODO: add constants for navigation reaction emotes
