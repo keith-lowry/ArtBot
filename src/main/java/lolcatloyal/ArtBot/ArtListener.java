@@ -286,9 +286,9 @@ public class ArtListener extends ListenerAdapter {
     private void onReceiveHelpCommand(MessageChannel channel){
         channel.sendMessage("**Text Commands**\n " +
                     "(these are preceeded by '" + ArtBot.PREFIX + "' )" +
-                    "\n\nadd [Twitter Link]   -- add a Twitter link to the bot's collection" +
-                    "\nshow                  -- show the bot's current collection of Artists and their handles with nav buttons" +
-                    "\nclear                   -- empty the collection of all entries" +
+                    "\n\nadd [Twitter Link]    -- add a Twitter link to the bot's collection" +
+                    "\nshow                           -- show the bot's current collection of Artists and their handles with nav buttons" +
+                    "\nclear                            -- empty the collection of all entries" +
                     "\nhelp                             -- show commands help" +
                     "\n\n**Nav Button Commands**" +
                     "\n(these are attached to embeds)" +
