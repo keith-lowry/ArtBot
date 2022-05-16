@@ -200,11 +200,6 @@ public class ArtListener extends ListenerAdapter {
             else if (helpMatcher.find()){
                 onReceiveHelpCommand(channel);
             }
-            //-quit
-            else if (quitMatcher.find()){
-                channel.sendMessage("Shutting down...").queue();
-                System.exit(0);
-            }
         }
     }
 
@@ -292,10 +287,9 @@ public class ArtListener extends ListenerAdapter {
         channel.sendMessage("**Text Commands**\n " +
                     "(these are preceeded by '" + ArtBot.PREFIX + "' )" +
                     "\n\nadd [Twitter Link]   -- add a Twitter link to the bot's collection" +
-                    "\nshow        -- show the bot's current collection of Artists and their handles with nav buttons" +
-                    "\nclear         -- empty the collection of all entries" +
+                    "\nshow                  -- show the bot's current collection of Artists and their handles with nav buttons" +
+                    "\nclear                   -- empty the collection of all entries" +
                     "\nhelp                             -- show commands help" +
-                    "\nquit                             -- shut down the bot" +
                     "\n\n**Nav Button Commands**" +
                     "\n(these are attached to embeds)" +
                     "\n\nNext                          -- move to the next entry in the collection" +
